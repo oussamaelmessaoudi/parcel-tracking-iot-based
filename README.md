@@ -61,3 +61,9 @@ Fatima Zahra BOUKAMAR
 │  Redis: Caching, Real-time State                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
+## Project Structure so far (will be updated in each merge)
+```
+- tracksecure-backend (empty project to regroup all the microservices)
+	- common (shared code like DTOs, constant .... in order to prevent duplication across all the services)
+		-DTOs (alert,tracking even, device, shipment)
+```
