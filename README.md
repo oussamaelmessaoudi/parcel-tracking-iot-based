@@ -16,4 +16,4 @@ Khaoula DAMANI
 Fatima Zahra BOUKAMAR 
 
 ## System Components 
-[composant](docs/assets/sys-comp-diag.jpg)
+[composant](docs/assets/SystemComposants.jpg)
