@@ -67,3 +67,5 @@ Fatima Zahra BOUKAMAR
 	- common (shared code like DTOs, constant .... in order to prevent duplication across all the services)
 		-DTOs (alert,tracking even, device, shipment)
 ```
+=======
+![composant](/docs/assets/SystemComponent.jpg)
