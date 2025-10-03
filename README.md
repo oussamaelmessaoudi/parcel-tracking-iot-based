@@ -68,6 +68,7 @@ Fatima Zahra BOUKAMAR
 		-DTOs (alert,tracking even, device, shipment)
 		-Contants (For shared constants usage)
 		-Exception ( Handling exceptions)
+		-Utils (helper classes and reusable across all services)
 ```
 =======
 ![composant](/docs/assets/SystemComponent.jpg)
