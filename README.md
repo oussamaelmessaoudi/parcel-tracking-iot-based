@@ -66,6 +66,8 @@ Fatima Zahra BOUKAMAR
 - tracksecure-backend (empty project to regroup all the microservices)
 	- common (shared code like DTOs, constant .... in order to prevent duplication across all the services)
 		-DTOs (alert,tracking even, device, shipment)
+		-Contants (For shared constants usage)
+		-Exception ( Handling exceptions)
 ```
 =======
 ![composant](/docs/assets/SystemComponent.jpg)
