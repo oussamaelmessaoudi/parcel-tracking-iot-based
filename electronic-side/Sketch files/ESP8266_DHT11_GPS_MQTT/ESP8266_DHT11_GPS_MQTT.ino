@@ -7,8 +7,8 @@
 // Pin definitions
 #define DHTPIN D3
 #define DHTTYPE DHT11
-#define RXD2 D2
-#define TXD2 D1
+#define RXD2 D1
+#define TXD2 D2
 #define GPS_BAUD 9600  
 
 // WiFi and MQTT credentials
@@ -26,7 +26,7 @@ SoftwareSerial gpsSerial(RXD2, TXD2);
 TinyGPSPlus gps;
 
 unsigned long lastPublish = 0;
-const unsigned long publishInterval = 5000;
+const unsigned long publishInterval = 5000; 
 
 void setup() {
   Serial.begin(115200);
@@ -39,66 +39,70 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nWiFi connected");
 
   client.setServer(mqttServer, mqttPort);
-  Serial.println("MQTT client ready");
+  Serial.println("\nWiFi connected, MQTT ready");
 }
 
-void ensureMqttConnected() {
-  if (!client.connected()) {
+void reconnectMQTT() {
+  while (!client.connected()) {
     Serial.print("Connecting to MQTT...");
     if (client.connect("ESP8266Client")) {
       Serial.println("connected");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
-      Serial.println(" retrying in 2 seconds");
+      Serial.println(" try again in 2 seconds");
       delay(2000);
     }
   }
 }
 
 void loop() {
-  ensureMqttConnected(); // Only reconnect if MQTT is disconnected
+  if (!client.connected()) {
+    reconnectMQTT();
+  }
   client.loop();
 
-  // Always read incoming GPS bytes
+  // Read GPS data
   while (gpsSerial.available() > 0) {
-    gps.encode(gpsSerial.read());
+    char c = gpsSerial.read();
+    gps.encode(c);
+    // Serial.write(c); // Debug: show raw NMEA
   }
 
   unsigned long now = millis();
-  if (now - lastPublish < publishInterval) return; // skip until interval passes
-  lastPublish = now;
+  if (now - lastPublish > publishInterval) {
+    lastPublish = now;
 
-  // --- GPS ---
-  if (gps.location.isValid()) {
-    String payload_gps = "{";
-    payload_gps += "\"latitude\":" + String(gps.location.lat(), 6) + ",";
-    payload_gps += "\"longitude\":" + String(gps.location.lng(), 6) + ",";
-    payload_gps += "\"satellites\":" + String(gps.satellites.value());
-    payload_gps += "}";
-    client.publish(topic_gps, payload_gps.c_str());
-    Serial.println("GPS Published: " + payload_gps);
-  } else {
-    Serial.println("No valid GPS signal yet");
+    // Publish GPS data if valid
+    if (gps.location.isValid() && gps.location.isUpdated()) {
+      String payload_gps = "{";
+      payload_gps += "\"latitude\":" + String(gps.location.lat(), 6) + ",";
+      payload_gps += "\"longitude\":" + String(gps.location.lng(), 6) + ",";
+      payload_gps += "\"satellites\":" + String(gps.satellites.value());
+      payload_gps += "}";
+      client.publish(topic_gps, payload_gps.c_str());
+      Serial.println("GPS Published: " + payload_gps);
+    } else {
+      Serial.println("Waiting for valid GPS signal...");
+    }
+
+    // Read DHT data
+    float temp = dht.readTemperature();
+    float humd = dht.readHumidity();
+
+    if (!isnan(temp) && !isnan(humd)) {
+      String payload_dht = "{";
+      payload_dht += "\"temperature\":" + String(temp, 2) + ",";
+      payload_dht += "\"humidity\":" + String(humd, 2);
+      payload_dht += "}";
+      client.publish(topic_dht, payload_dht.c_str());
+      Serial.println("DHT Published: " + payload_dht);
+    } else {
+      Serial.println("Waiting for valid DHT data...");
+    }
+
+    Serial.println("--------------------------");
   }
-
-  // --- DHT11 ---
-  float temp = dht.readTemperature();
-  float humd = dht.readHumidity();
-
-  if (!isnan(temp) && !isnan(humd)) {
-    String payload_dht = "{";
-    payload_dht += "\"temperature\":" + String(temp, 2) + ",";
-    payload_dht += "\"humidity\":" + String(humd, 2);
-    payload_dht += "}";
-    client.publish(topic_dht, payload_dht.c_str());
-    Serial.println("DHT Published: " + payload_dht);
-  } else {
-    Serial.println("Invalid DHT data (sensor not ready)");
-  }
-
-  Serial.println("--------------------------");
 }
