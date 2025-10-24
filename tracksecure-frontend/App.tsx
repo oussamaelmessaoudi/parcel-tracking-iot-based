@@ -57,7 +57,7 @@ const App: React.FC = () => {
             <div>
                 <h1 className="text-3xl font-bold text-white">Dashboard de Suivi de Colis</h1>
                 <p className="text-slate-400 mt-1">
-                    {data ? `Données pour le colis #${data.packageId}` : 'En attente de données...'}
+                    {/* {data ? `Données pour le colis #${data.packageId}` : 'En attente de données...'} */}
                 </p>
             </div>
           <button
@@ -99,16 +99,19 @@ const App: React.FC = () => {
                 icon={<DropletIcon className="h-8 w-8 text-white" />}
                 colorClass="bg-sky-500"
               />
-              <MapCard coordinates={data.coordinates} />
+              {/* <MapCard coordinates={data.coordinates} /> */}
             </>
           ) : null}
         </main>
         
+        {/* // App.tsx (en bas) */}
+
         <footer className="text-center mt-12 text-slate-500 text-sm">
-            <p>Dernière mise à jour : {data ? new Date(data.lastUpdated).toLocaleString('fr-FR') : 'N/A'}</p>
+            <p>Dernière mise à jour : {data ? new Date(data.timestamp).toLocaleString('fr-FR') : 'N/A'}</p>
         </footer>
       </div>
     </div>
+    
   );
 };
 
