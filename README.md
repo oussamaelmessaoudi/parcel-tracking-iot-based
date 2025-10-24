@@ -72,3 +72,12 @@ Fatima Zahra BOUKAMAR
 ```
 =======
 ![composant](/docs/assets/SystemComponent.jpg)
+
+### Circuit Diagram 
+Below is the circuit wiring for the IoT Parcel Tracking Device using **ESP32**, **GPS module**, and **DHT11 temperature sensor**.
+
+![Circuit Diagram](/docs/assets/circuit0.png)
+
+### Real-life Circuit 
+
+![Real-life Circuit](/docs/assets/circuit1.jpg)
