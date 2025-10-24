@@ -1,0 +1,84 @@
+version: '3.7'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    networks:
+      - parcel-net
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    networks:
+      - parcel-net
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    # --- AJOUT DU HEALTHCHECK ---
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --list --bootstrap-server localhost:29092"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  spark:
+    image: jupyter/pyspark-notebook
+    container_name: spark
+    ports:
+      - "4041:4040"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - parcel-net
+    volumes:
+      - ./process.py:/app/process.py
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.5.0
+      /app/process.py
+
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    networks:
+      - parcel-net
+    environment:
+      POSTGRES_USER: sparkuser
+      POSTGRES_PASSWORD: sparkpassword
+      POSTGRES_DB: parcel_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sparkuser -d parcel_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - parcel-net
+    depends_on:
+      - postgres
+
+networks:
+  parcel-net:
+    driver: bridge

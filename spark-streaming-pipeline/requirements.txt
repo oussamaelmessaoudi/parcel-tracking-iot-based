@@ -1,0 +1,32 @@
+# Spark Streaming and PySpark
+pyspark==3.5.7
+
+# Kafka for Python (consumer/producer)
+kafka-python==2.1.1
+
+# Data processing and manipulation
+pandas==2.1.1
+numpy==1.26.0
+
+# Visualization
+matplotlib==3.8.0
+seaborn==0.12.2
+
+# Date/time handling
+python-dateutil==2.9.2
+
+# JSON validation (useful for configs or Kafka messages)
+jsonschema==4.21.0
+
+# Advanced logging
+loguru==0.7.0
+
+# Docker client (if you want to manage Kafka/Zookeeper via Python)
+docker==6.1.3
+
+# PostgreSQL/MySQL if you store data in databases
+psycopg2-binary==2.9.9
+mysql-connector-python==8.1.1
+
+# Optional: for handling CSV/Excel files
+openpyxl==3.1.2
