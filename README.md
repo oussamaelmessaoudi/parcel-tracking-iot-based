@@ -73,11 +73,43 @@ Fatima Zahra BOUKAMAR
 =======
 ![composant](/docs/assets/SystemComponent.jpg)
 
-### Circuit Diagram 
+## Running the App with Docker
+
+7awlo tdiro build l docker image bach mat7taj tcharji depends, java wla maven
+
+```bash
+# 1- Pull the image 
+docker pull oussamaelmessaoudi/sensors-payload:latest
+```
+
+# 2- Build the image locally
+
+ila makanch 3ndkom docker desktop, try to use WSL2 ubuntu (using this command on Powershell):
+```bash
+wsl -d ubuntu
+sudo service docker start
+cd "/mnt/.../parcel-tracking-iot-based/electronic-side/SensorsPayload"
+docker build -t sensors-payload .
+```
+
+# 3- Run the container
+
+```bash
+docker run -p 1440:1440 sensors-payload
+
+```
+daba app mtlo9 w t9dro tdkhlo lih via : http://localhost:1440
+
+# 4- Notes :
+- Khass darori ykon 3ndkom Docker m installer wdayr lih run
+- awal build atdiro aykhad quelques minutes 
+- ila drto lih build, l'image t9der t3awd tkhdam biha bla building y3ni atmshi l step 3 direct
+
+## Circuit Diagram 
 Below is the circuit wiring for the IoT Parcel Tracking Device using **ESP32**, **GPS module**, and **DHT11 temperature sensor**.
 
 ![Circuit Diagram](/docs/assets/circuit0.png)
 
-### Real-life Circuit 
+## Real-life Circuit 
 
 ![Real-life Circuit](/docs/assets/circuit1.jpg)
