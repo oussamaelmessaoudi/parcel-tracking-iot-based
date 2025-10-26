@@ -32,7 +32,7 @@ All Spark, Java, and Hadoop components run *inside* containers.
 
 * `docker-compose.yml` - Complete environment blueprint
 * `process.py` - Spark streaming processor
-* `producer_fixed.py` - IoT data simulator
+* `producer.py` - IoT data simulator
 * `requirements.txt` - Python dependencies
 
 ---
@@ -93,7 +93,7 @@ docker-compose restart spark-processor
 ### 6️⃣ Send Test Data
 ```bash
 .\venv\Scripts\activate
-python producer_fixed.py
+python producer.py
 ```
 
 ### 7️⃣ Check Results
