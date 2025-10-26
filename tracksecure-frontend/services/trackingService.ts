@@ -2,8 +2,8 @@ import { TrackingData, PackageData } from '../types';
 
 // Simuler une table de colis en mémoire avec l'assignation utilisateur
 const packages: PackageData[] = [
-    { id: 'PKG-12345', username: 'user' },
-    { id: 'PKG-ABCDE', username: 'user' },
+    { id: 'PKG-12345', username: 'user', departureLocation: 'Entrepôt A, Paris', pickupLocation: 'Client X, Lyon' },
+    { id: 'PKG-ABCDE', username: 'user', departureLocation: 'Entrepôt B, Marseille', pickupLocation: 'Client Y, Lille' },
 ];
 
 /**
@@ -22,7 +22,7 @@ export const fetchTrackingData = async (): Promise<TrackingData> => {
 /**
  * Simule la création d'un nouveau colis et l'assigne à un utilisateur.
  */
-export const createPackage = (packageId: string, username: string): Promise<PackageData> => {
+export const createPackage = (packageId: string, username: string, departureLocation: string, pickupLocation: string): Promise<PackageData> => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             if (packages.some(p => p.id === packageId)) {
@@ -34,7 +34,10 @@ export const createPackage = (packageId: string, username: string): Promise<Pack
             if (!username) {
                 return reject(new Error('Un utilisateur doit être sélectionné.'));
             }
-            const newPackage = { id: packageId, username };
+            if (!departureLocation.trim() || !pickupLocation.trim()) {
+                return reject(new Error('Les lieux de départ et de prise en charge sont requis.'));
+            }
+            const newPackage = { id: packageId, username, departureLocation, pickupLocation };
             packages.push(newPackage);
             resolve(newPackage);
         }, 300);

@@ -33,7 +33,7 @@ const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
               <label htmlFor="username" className="sr-only">Nom d'utilisateur</label>
               <input
@@ -42,7 +42,7 @@ const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
                 type="text"
                 autoComplete="username"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
                 placeholder="Nom d'utilisateur (ex: admin ou user)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -56,7 +56,7 @@ const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
                 placeholder="Mot de passe (ex: admin123 ou user123)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

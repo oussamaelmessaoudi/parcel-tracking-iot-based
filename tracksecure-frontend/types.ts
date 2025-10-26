@@ -14,6 +14,8 @@ export interface TrackingData {
 export interface PackageData {
     id: string;
     username: string; // L'utilisateur à qui le colis est assigné
+    departureLocation: string;
+    pickupLocation: string;
 }
 
 export interface User {

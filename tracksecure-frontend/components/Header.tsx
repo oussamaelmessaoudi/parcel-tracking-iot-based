@@ -25,10 +25,10 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                             <LogoIcon className="h-8 w-8 text-emerald-500 mr-2" />
                             <span className="text-xl font-bold text-slate-800">TrackSecure</span>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 sm:space-x-4">
                             <div className="flex items-center space-x-2 bg-gray-100 py-1.5 px-3 rounded-full">
                                 <UserIcon className="h-5 w-5 text-gray-500" />
-                                <span className="text-gray-700 font-medium text-sm">{user.username}</span>
+                                <span className="text-gray-700 font-medium text-sm hidden sm:inline">{user.username}</span>
                             </div>
                             <button
                                 onClick={logout}
