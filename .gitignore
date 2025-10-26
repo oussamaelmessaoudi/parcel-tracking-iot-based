@@ -27,3 +27,8 @@ replay_pid*
 *.iml
 .idea/
 
+# Ignore Python virtual environments
+venv/
+__pycache__/
+*.pyc
+
