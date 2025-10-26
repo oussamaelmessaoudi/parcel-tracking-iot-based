@@ -1,59 +1,73 @@
+# producer_fixed.py
 import json
 from kafka import KafkaProducer
 import time
+import random
 
-# Create a producer
-# We use 'localhost:9092' because this script is running on your
-# Windows machine, which is connected to the Docker port 9092.
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8') # Serialize JSON to bytes
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-print("Producer started. Sending messages to all topics...")
+print("Live producer started. Sending to 3 topics (gps, temperature, battery)...")
+print("Press Ctrl+C to stop.")
 
-# 1. Define GPS message
-gps_data = {
-    "package_id": "PKG-12345",
-    "latitude": 34.020882,
-    "longitude": -6.841650
-}
-
-# 2. Define Temperature message
-temperature_data = {
-    "package_id": "PKG-12345",
-    "temperature": 25.5
-}
-
-# 3. Define Battery message
-battery_data = {
-    "package_id": "PKG-12345",
-    "battery_level": 0.82  # 82%
-}
-
+# Starting data
+lat = 34.0208
+lon = -6.8416
+temp = 25.0
+batt = 95.0  # Changed to percentage
+speed = 60.0
+humidity = 55.0
+package_id = "pkg_001"
 
 try:
-    # Send the GPS message
-    future_gps = producer.send('gps', value=gps_data)
-    record_gps = future_gps.get(timeout=10)
-    print(f"Message sent to 'gps' topic! Offset: {record_gps.offset}")
+    while True:
+        # Simulate changes
+        lat += random.uniform(-0.0005, 0.0005)
+        lon += random.uniform(-0.0005, 0.0005)
+        temp += random.uniform(-0.5, 0.5)
+        batt -= 0.01  # Slow battery drain
+        if batt < 0: batt = 0
+        speed += random.uniform(-3, 3)
+        if speed < 0: speed = 0
 
-    # Send the Temperature message
-    future_temp = producer.send('temperature', value=temperature_data)
-    record_temp = future_temp.get(timeout=10)
-    print(f"Message sent to 'temperature' topic! Offset: {record_temp.offset}")
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    # Send the Battery message
-    future_batt = producer.send('battery', value=battery_data)
-    record_batt = future_batt.get(timeout=10)
-    print(f"Message sent to 'battery' topic! Offset: {record_batt.offset}")
+        # Create 3 separate messages with CORRECT field names matching Spark schema
+        gps_data = {
+            "package_id": package_id,  # Changed from "Route ID"
+            "latitude": lat,           # Changed from "GPS Latitude"
+            "longitude": lon,          # Changed from "GPS Longitude"
+            "Speed": speed,
+            "timestamp": current_time
+        }
 
-    print("\nAll messages sent successfully!")
+        temp_data = {
+            "package_id": package_id,  # Changed from "Route ID"
+            "temperature": temp,
+            "Humidity": humidity,
+            "timestamp": current_time
+        }
 
-except Exception as e:
-    print(f"Error sending message: {e}")
+        batt_data = {
+            "package_id": package_id,  # Changed from "Route ID"
+            "battery_level": batt,
+            "battery_status": "healthy" if batt > 20 else "low",
+            "timestamp": current_time
+        }
 
+        # Send to the 3 topics
+        producer.send('gps', value=gps_data)
+        producer.send('temperature', value=temp_data)
+        producer.send('battery', value=batt_data)
+        producer.flush()
+
+        print(f"Sent data for {package_id} (lat: {lat:.4f}, temp: {temp:.1f}°C, battery: {batt:.1f}%)")
+
+        time.sleep(5)
+
+except KeyboardInterrupt:
+    print("\nStopping producer.")
 finally:
-    # Flush and close the producer
-    producer.flush()
     producer.close()

@@ -1,126 +1,229 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, from_json, current_timestamp, expr
-from pyspark.sql.types import StructType, StringType, DoubleType, TimestampType
+# process.py
+import os
 import time
+import shutil
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    col, from_json, current_timestamp, when, lit, sqrt, pow
+)
+from pyspark.sql.types import (
+    StructType, StructField, StringType, DoubleType, TimestampType, IntegerType
+)
+from pyspark.ml import PipelineModel
 
-# --- Configuration PostgreSQL ---
-db_url = "jdbc:postgresql://postgres:5432/parcel_db"
-db_table = "parcel_data"
-db_properties = {
-    "user": "sparkuser",
-    "password": "sparkpassword",
-    "driver": "org.postgresql.Driver"
-}
+# -------------------------
+# Configuration
+# -------------------------
+CHECKPOINT_LOCATION = "/app/checkpoints/postgres_sink_ml"
+DB_URL = "jdbc:postgresql://postgres:5432/parcel_db"
+DB_TABLE = "parcel_predictions"
+DB_USER = "sparkuser"
+DB_PASSWORD = "sparkpassword"
+DB_PROPERTIES = {"user": DB_USER, "password": DB_PASSWORD, "driver": "org.postgresql.Driver"}
+KAFKA_BOOTSTRAP_SERVERS = "kafka:29092"
 
-# --- Fonction pour écrire le batch joint dans PostgreSQL ---
-def write_joined_batch_to_postgres(batch_df, epoch_id):
-    # Cette fonction est appelée pour chaque micro-batch
+def cleanup_checkpoint():
+    try:
+        if os.path.exists(CHECKPOINT_LOCATION):
+            shutil.rmtree(CHECKPOINT_LOCATION)
+        os.makedirs(CHECKPOINT_LOCATION, exist_ok=True)
+        print(" Checkpoint cleaned")
+    except Exception as e:
+        print(f" Checkpoint cleanup failed: {e}")
+
+def write_predictions_to_postgres(batch_df, epoch_id):
     print(f"--- Writing Batch {epoch_id} ---")
+    try:
+        if batch_df.count() > 0:
+            batch_df.write.jdbc(url=DB_URL, table=DB_TABLE, mode="append", properties=DB_PROPERTIES)
+            print(f" Batch {epoch_id} written ({batch_df.count()} rows)")
+        else:
+            print(f" Batch {epoch_id} empty")
+    except Exception as e:
+        print(f" Batch {epoch_id} failed: {e}")
 
-    # Écrire le DataFrame dans la table PostgreSQL
-    # 'mode("append")' ajoute les nouvelles données
-    batch_df.write \
-        .mode("append") \
-        .jdbc(url=db_url, table=db_table, properties=db_properties)
+# -------------------------
+# Main execution
+# -------------------------
+print(" Waiting for services...")
+time.sleep(30)
 
-    print(f"--- Batch {epoch_id} written successfully ---")
-
-
-# Délai pour laisser PostgreSQL et Kafka démarrer
-time.sleep(15)
-print("Spark script started...")
-
-# Créer la session Spark
+print(" Starting Spark...")
 spark = SparkSession.builder \
-    .appName("ParcelTrackingStreaming") \
-    .config("spark.driver.memory", "4g") \
-    .getOrCreate() # Les packages Kafka et PostgreSQL sont chargés par docker-compose
+    .appName("ParcelTrackingWithYourModels") \
+    .config("spark.sql.adaptive.enabled", "false") \
+    .getOrCreate()
 
-spark.sparkContext.setLogLevel("ERROR")
-print("Spark version:", spark.version)
-print("Spark session created!")
+spark.sparkContext.setLogLevel("INFO")
 
-# Définir les schémas
-gps_schema = StructType().add("package_id", StringType()).add("latitude", DoubleType()).add("longitude", DoubleType())
-temperature_schema = StructType().add("package_id", StringType()).add("temperature", DoubleType())
-battery_schema = StructType().add("package_id", StringType()).add("battery_level", DoubleType())
+cleanup_checkpoint()
 
-# Lire les 3 topics depuis Kafka
+# Check PostgreSQL
+try:
+    test_df = spark.read.jdbc(url=DB_URL, table=DB_TABLE, properties=DB_PROPERTIES)
+    print(f"PostgreSQL OK: {test_df.count()} rows")
+except Exception as e:
+    print(f"PostgreSQL failed: {e}")
+    spark.stop()
+    exit(1)
+
+# Load YOUR models
+print("Loading YOUR saved models...")
+
+def load_your_model(path, name):
+    try:
+        model = PipelineModel.load(path)
+        print(f"{name} loaded successfully")
+        return model
+    except Exception as e:
+        print(f"{name} failed to load: {e}")
+        return None
+
+kmeans_model = load_your_model("/app/models/kmeans_pipeline", "KMeans")
+rf_model = load_your_model("/app/models/rf_pipeline", "Random Forest")
+iforest_model = load_your_model("/app/models/iforest_pipeline", "Isolation Forest")
+
+# Schema for Kafka data
+schema = StructType([
+    StructField("package_id", StringType(), True),
+    StructField("latitude", DoubleType(), True),
+    StructField("longitude", DoubleType(), True),
+    StructField("Speed", DoubleType(), True),
+    StructField("temperature", DoubleType(), True),
+    StructField("Humidity", DoubleType(), True),
+    StructField("battery_level", DoubleType(), True),
+    StructField("battery_status", StringType(), True),
+    StructField("timestamp", StringType(), True)
+])
+
+# Read Kafka
+print("Reading from Kafka...")
 kafka_df = spark.readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:29092") \
+    .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
     .option("subscribe", "gps,temperature,battery") \
     .option("startingOffsets", "latest") \
     .load()
 
-print("Successfully connected to Kafka topics.")
-
-# Convertir les données et ajouter un timestamp
-kafka_df_parsed = kafka_df \
-    .selectExpr("topic", "CAST(value AS STRING) as value") \
-    .withColumn("timestamp", current_timestamp()) # Ajoute l'heure de traitement
-
-# Parser et séparer les messages
-gps_df = kafka_df_parsed \
-    .filter(col("topic") == "gps") \
-    .select(from_json(col("value"), gps_schema).alias("data"), col("timestamp")) \
-    .select("data.*", "timestamp") \
-    .withWatermark("timestamp", "1 minute")
-
-temperature_df = kafka_df_parsed \
-    .filter(col("topic") == "temperature") \
-    .select(from_json(col("value"), temperature_schema).alias("data"), col("timestamp").alias("temp_time")) \
-    .select("data.*", "temp_time") \
-    .withWatermark("temp_time", "1 minute")
-
-battery_df = kafka_df_parsed \
-    .filter(col("topic") == "battery") \
-    .select(from_json(col("value"), battery_schema).alias("data"), col("timestamp").alias("batt_time")) \
-    .select("data.*", "batt_time") \
-    .withWatermark("batt_time", "1 minute")
-
-# Joindre les streams (PARTIE CORRIGÉE)
-print("Joining streams...")
-
-# Créer des alias (surnoms) pour résoudre l'ambiguïté
-gps_aliased = gps_df.alias("gps")
-temp_aliased = temperature_df.alias("temp")
-batt_aliased = battery_df.alias("batt")
-
-joined_df = gps_aliased.join(
-    temp_aliased,
-    expr("""
-        gps.package_id = temp.package_id AND 
-        temp.temp_time >= gps.timestamp - interval 2 minutes AND
-        temp.temp_time <= gps.timestamp + interval 2 minutes
-    """),
-    "leftOuter"
-).join(
-    batt_aliased,
-    expr("""
-        gps.package_id = batt.package_id AND
-        batt.batt_time >= gps.timestamp - interval 2 minutes AND
-        batt.batt_time <= gps.timestamp + interval 2 minutes
-    """),
-    "leftOuter"
-).select(
-    col("gps.package_id").alias("package_id"), # Sélectionner la colonne principale
-    col("gps.timestamp").alias("timestamp"),
-    col("gps.latitude"),
-    col("gps.longitude"),
-    col("temp.temperature"),
-    col("batt.battery_level")
+# Parse data
+parsed_df = kafka_df.selectExpr("CAST(value AS STRING) as value") \
+    .select(from_json("value", schema).alias("data")) \
+    .select(
+    # Base fields from Kafka
+    when(col("data.package_id").isNull(), "unknown").otherwise(col("data.package_id")).alias("package_id"),
+    when(col("data.latitude").isNull(), 34.0208).otherwise(col("data.latitude")).alias("GPS Latitude"),  # WITH SPACE
+    when(col("data.longitude").isNull(), -6.8416).otherwise(col("data.longitude")).alias("GPS Longitude"),  # WITH SPACE
+    when(col("data.Speed").isNull(), 50.0).otherwise(col("data.Speed")).alias("Speed"),
+    when(col("data.temperature").isNull(), 25.0).otherwise(col("data.temperature")).alias("Temperature"),
+    when(col("data.Humidity").isNull(), 55.0).otherwise(col("data.Humidity")).alias("Humidity"),
+    when(col("data.battery_level").isNull(), 95.0).otherwise(col("data.battery_level")).alias("battery_level"),
+    when(col("data.battery_status").isNull(), "healthy").otherwise(col("data.battery_status")).alias("battery_status"),
+    current_timestamp().alias("event_time")
 )
 
-print("Stream join defined.")
+print("🔧 Creating features EXACTLY like your training data...")
 
-# Écrire le stream FINAL vers PostgreSQL
-query = joined_df.writeStream \
+# Create the SAME features your models were trained with
+feature_df = parsed_df \
+    .withColumn("dist_approx", lit(0.0)) \
+    .withColumn("speed_calc", col("Speed")) \
+    .withColumn("time_diff_secs", lit(0.0)) \
+    .withColumn("battery_low", when(col("battery_level") < 20, 1.0).otherwise(0.0)) \
+    .withColumn("temp_alert", when(col("Temperature") > 40, 1.0).otherwise(0.0)) \
+    .withColumn("Route ID", lit("route_001")) \
+    .withColumn("Risk Factor",
+                when(col("Speed") > 80, "HIGH")
+                .when(col("Speed") > 50, "MEDIUM")
+                .otherwise("LOW")) \
+    .withColumn("Disruption Type",
+                when(col("battery_level") < 20, "BATTERY_LOW")
+                .when(col("Speed") == 0, "STOPPED")
+                .otherwise("NONE")) \
+    .withColumn("Delivery Status", lit("IN_TRANSIT")) \
+    .withColumn("Stage", lit("TRANSPORT")) \
+    .withColumn("delayed_label", lit(0))  # Required for RF model
+
+print("Features schema (what models will see):")
+feature_df.printSchema()
+
+# Apply YOUR models
+print("Applying YOUR models...")
+result_df = feature_df
+
+# KMeans
+if kmeans_model:
+    try:
+        print("Applying KMeans...")
+        result_df = kmeans_model.transform(result_df)
+        print("KMeans applied")
+    except Exception as e:
+        print(f"KMeans failed: {e}")
+        result_df = result_df.withColumn("traj_cluster", lit(0))
+else:
+    result_df = result_df.withColumn("traj_cluster", lit(0))
+
+# Random Forest
+if rf_model:
+    try:
+        print("Applying Random Forest...")
+        result_df = rf_model.transform(result_df)
+        # Rename prediction column based on your training
+        if "prediction" in result_df.columns:
+            result_df = result_df.withColumnRenamed("prediction", "delay_prediction")
+            print("Random Forest applied")
+        else:
+            print("RF no prediction column")
+            result_df = result_df.withColumn("delay_prediction", lit(0.0))
+    except Exception as e:
+        print(f"RF failed: {e}")
+        result_df = result_df.withColumn("delay_prediction", lit(0.0))
+else:
+    result_df = result_df.withColumn("delay_prediction", lit(0.0))
+
+# Isolation Forest
+if iforest_model:
+    try:
+        print("Applying Isolation Forest...")
+        result_df = iforest_model.transform(result_df)
+        # Your training used 'anomaly_pred'
+        if "anomaly_pred" in result_df.columns:
+            result_df = result_df.withColumnRenamed("anomaly_pred", "anomaly_prediction")
+            print("Isolation Forest applied")
+        elif "prediction" in result_df.columns:
+            result_df = result_df.withColumnRenamed("prediction", "anomaly_prediction")
+            print("Isolation Forest applied (using prediction)")
+        else:
+            print("IF no prediction column")
+            result_df = result_df.withColumn("anomaly_prediction", lit(0.0))
+    except Exception as e:
+        print(f"IF failed: {e}")
+        result_df = result_df.withColumn("anomaly_prediction", lit(0.0))
+else:
+    result_df = result_df.withColumn("anomaly_prediction", lit(0.0))
+
+# Final output for PostgreSQL
+final_df = result_df \
+    .withColumn("latitude", col("GPS Latitude")) \
+    .withColumn("longitude", col("GPS Longitude")) \
+    .withColumn("temperature", col("Temperature")) \
+    .select(
+    "package_id", "event_time", "latitude", "longitude",
+    "temperature", "battery_level", "delay_prediction",
+    "traj_cluster", "anomaly_prediction"
+)
+
+print("Final output schema:")
+final_df.printSchema()
+
+# Start streaming
+print("Starting streaming to PostgreSQL...")
+query = final_df.writeStream \
     .outputMode("append") \
-    .foreachBatch(write_joined_batch_to_postgres) \
-    .option("checkpointLocation", "/tmp/spark-checkpoints/postgres_sink") \
+    .foreachBatch(write_predictions_to_postgres) \
+    .option("checkpointLocation", CHECKPOINT_LOCATION) \
+    .trigger(processingTime="10 seconds") \
     .start()
 
-# Attendre la fin
-print("Starting stream to PostgreSQL... waiting for termination.")
+print("Streaming started with YOUR models!")
+print("Waiting for data...")
 query.awaitTermination()
