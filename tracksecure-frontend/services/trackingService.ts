@@ -1,27 +1,64 @@
-// trackingService.ts
+import { TrackingData, PackageData } from '../types';
 
-import { TrackingData } from '../types';
+// Simuler une table de colis en mémoire avec l'assignation utilisateur
+const packages: PackageData[] = [
+    { id: 'PKG-12345', username: 'user' },
+    { id: 'PKG-ABCDE', username: 'user' },
+];
 
-// Appel réel à l'API Spring Boot
+/**
+ * Récupère les dernières données de suivi depuis le backend Spring Boot.
+ */
 export const fetchTrackingData = async (): Promise<TrackingData> => {
-  // Supprimez le try...catch d'ici.
-  // Laissez App.tsx gérer les erreurs.
-  
   const response = await fetch('http://localhost:1440/sensor/data');
   if (!response.ok) {
-    // Si l'API renvoie une erreur (404, 500, etc.)
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`Erreur HTTP ! statut: ${response.status}`);
   }
   const data: TrackingData = await response.json();
-  
-  // Note : data.timestamp est déjà un string, pas besoin de .toString()
-  return {
-    temperature: data.temperature,
-    humidity: data.humidity,
-    timestamp: data.timestamp,
-  };
-  
-  // Le bloc 'catch' a été supprimé. 
-  // Si le fetch échoue (CORS, réseau coupé), l'erreur "montera"
-  // jusqu'au 'catch' de la fonction 'loadData' dans App.tsx.
+  return data;
+};
+
+
+/**
+ * Simule la création d'un nouveau colis et l'assigne à un utilisateur.
+ */
+export const createPackage = (packageId: string, username: string): Promise<PackageData> => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (packages.some(p => p.id === packageId)) {
+                return reject(new Error('Ce numéro de colis existe déjà.'));
+            }
+            if (!packageId.trim()) {
+                return reject(new Error('Le numéro de colis ne peut pas être vide.'));
+            }
+            if (!username) {
+                return reject(new Error('Un utilisateur doit être sélectionné.'));
+            }
+            const newPackage = { id: packageId, username };
+            packages.push(newPackage);
+            resolve(newPackage);
+        }, 300);
+    });
+};
+
+/**
+ * Récupère la liste de tous les colis (pour l'admin).
+ */
+export const getPackages = (): Promise<PackageData[]> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve([...packages]);
+        }, 200);
+    });
+};
+
+/**
+ * Récupère les colis pour un utilisateur spécifique.
+ */
+export const getPackagesForUser = (username: string): Promise<PackageData[]> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(packages.filter(p => p.username === username));
+        }, 200);
+    });
 };

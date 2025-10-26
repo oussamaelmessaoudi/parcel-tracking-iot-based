@@ -1,25 +1,26 @@
-
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface DashboardCardProps {
+  icon: ReactNode;
   title: string;
-  value: string | number;
-  unit: string;
-  icon: React.ReactNode;
-  colorClass: string;
+  value: string;
+  footerText: string;
 }
 
-const DashboardCard: React.FC<DashboardCardProps> = ({ title, value, unit, icon, colorClass }) => {
+const DashboardCard: React.FC<DashboardCardProps> = ({ icon, title, value, footerText }) => {
   return (
-    <div className="bg-slate-800 p-6 rounded-2xl shadow-lg flex items-center space-x-6 transition-transform transform hover:scale-105 duration-300">
-      <div className={`p-4 rounded-full ${colorClass}`}>
-        {icon}
+    <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="text-3xl font-bold text-gray-800">{value}</p>
+        </div>
+        <div className="bg-gray-100 rounded-full p-3">
+            {icon}
+        </div>
       </div>
-      <div>
-        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-bold text-white">
-          {value} <span className="text-xl font-light text-slate-300">{unit}</span>
-        </p>
+      <div className="mt-4">
+        <p className="text-xs text-gray-400">{footerText}</p>
       </div>
     </div>
   );
