@@ -18,7 +18,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin }) => {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         {/* Contenu texte */}
                         <div className="space-y-6 text-center md:text-left">
-                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-slate-900">
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight text-slate-900">
                                 <span className="text-emerald-500">Suivi de colis.</span>
                                 <br />
                                 Simple. Instantané.

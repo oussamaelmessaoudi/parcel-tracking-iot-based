@@ -11,6 +11,8 @@ interface CreatePackageFormProps {
 const CreatePackageForm: React.FC<CreatePackageFormProps> = ({ users, onSuccess, onCancel }) => {
     const [packageId, setPackageId] = useState('');
     const [selectedUsername, setSelectedUsername] = useState<string>(users.find(u => u.role === 'utilisateur')?.username || '');
+    const [departureLocation, setDepartureLocation] = useState('');
+    const [pickupLocation, setPickupLocation] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -20,14 +22,14 @@ const CreatePackageForm: React.FC<CreatePackageFormProps> = ({ users, onSuccess,
         e.preventDefault();
         setError(null);
 
-        if (!packageId.trim() || !selectedUsername) {
+        if (!packageId.trim() || !selectedUsername || !departureLocation.trim() || !pickupLocation.trim()) {
             setError('Tous les champs sont requis.');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            await createPackage(packageId, selectedUsername);
+            await createPackage(packageId, selectedUsername, departureLocation, pickupLocation);
             onSuccess();
         } catch (err) {
             if (err instanceof Error) {
@@ -53,6 +55,30 @@ const CreatePackageForm: React.FC<CreatePackageFormProps> = ({ users, onSuccess,
                         onChange={(e) => setPackageId(e.target.value)}
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                         placeholder="ex: PKG-XYZ789"
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="departure-location" className="block text-sm font-medium text-gray-700">Lieu de départ</label>
+                    <input
+                        type="text"
+                        id="departure-location"
+                        value={departureLocation}
+                        onChange={(e) => setDepartureLocation(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                        placeholder="ex: Entrepôt A, Paris"
+                        required
+                    />
+                </div>
+                 <div>
+                    <label htmlFor="pickup-location" className="block text-sm font-medium text-gray-700">Lieu de prise en charge</label>
+                    <input
+                        type="text"
+                        id="pickup-location"
+                        value={pickupLocation}
+                        onChange={(e) => setPickupLocation(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                        placeholder="ex: Client X, Lyon"
                         required
                     />
                 </div>

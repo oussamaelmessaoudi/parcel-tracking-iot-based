@@ -9,9 +9,19 @@ import LandingPage from './components/LandingPage';
 const App: React.FC = () => {
   const { user } = useAuth();
   const [showLoginPage, setShowLoginPage] = useState(false);
+  const [trackedPackageIdByAdmin, setTrackedPackageIdByAdmin] = useState<string | null>(null);
+
 
   const handleNavigateToLogin = () => {
     setShowLoginPage(true);
+  };
+
+  const handleTrackPackage = (packageId: string) => {
+    setTrackedPackageIdByAdmin(packageId);
+  };
+
+  const handleBackToAdminDashboard = () => {
+    setTrackedPackageIdByAdmin(null);
   };
 
   if (!user) {
@@ -25,7 +35,18 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 font-sans">
       <Header />
       <main className="container mx-auto p-4 md:p-6 lg:p-8">
-        {user.role === 'administrateur' ? <AdminDashboard /> : <TrackingDashboard />}
+        {user.role === 'administrateur' ? (
+            trackedPackageIdByAdmin ? (
+                <TrackingDashboard 
+                    selectedPackageIdFromAdmin={trackedPackageIdByAdmin} 
+                    onBackToAdmin={handleBackToAdminDashboard} 
+                />
+            ) : (
+                <AdminDashboard onTrackPackage={handleTrackPackage} />
+            )
+        ) : (
+            <TrackingDashboard />
+        )}
       </main>
     </div>
   );

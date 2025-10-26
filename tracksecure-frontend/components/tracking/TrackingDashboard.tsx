@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchTrackingData, getPackagesForUser } from '../../services/trackingService';
+import { fetchTrackingData, getPackages, getPackagesForUser } from '../../services/trackingService';
 import { TrackingData, PackageData } from '../../types';
 import DashboardCard from '../DashboardCard';
 import MapCard from '../MapCard';
 import { ThermometerIcon, DropletIcon, MapPinIcon, RefreshIcon, PackageIcon, ExclamationTriangleIcon } from '../Icons';
 
-const TrackingDashboard: React.FC = () => {
+interface TrackingDashboardProps {
+  selectedPackageIdFromAdmin?: string;
+  onBackToAdmin?: () => void;
+}
+
+const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageIdFromAdmin, onBackToAdmin }) => {
   const { user } = useAuth();
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -16,15 +21,19 @@ const TrackingDashboard: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      getPackagesForUser(user.username)
-        .then(userPackages => {
-          setPackages(userPackages);
-          if (userPackages.length > 0) {
-            setSelectedPackageId(userPackages[0].id);
+      const fetcher = onBackToAdmin ? getPackages : () => getPackagesForUser(user.username);
+      fetcher()
+        .then(pkgs => {
+          setPackages(pkgs);
+          if (selectedPackageIdFromAdmin) {
+            setSelectedPackageId(selectedPackageIdFromAdmin);
+          } else if (pkgs.length > 0 && !selectedPackageId) {
+            setSelectedPackageId(pkgs[0].id);
           }
         });
     }
-  }, [user]);
+  }, [user, onBackToAdmin, selectedPackageIdFromAdmin]);
+
 
   const loadTrackingData = async () => {
     setIsLoading(true);
@@ -58,7 +67,16 @@ const TrackingDashboard: React.FC = () => {
   
   return (
     <div>
-      <h1 className="text-3xl font-bold text-slate-800 mb-6">Tableau de bord de suivi</h1>
+      <div className="flex items-start mb-6">
+        {onBackToAdmin && (
+            <button onClick={onBackToAdmin} className="mr-2 mt-1 flex-shrink-0 p-2 rounded-full hover:bg-gray-200 transition-colors" title="Retour à la liste">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+        )}
+        <h1 className="text-3xl font-bold text-slate-800">Tableau de bord de suivi</h1>
+      </div>
 
       <div className="mb-6">
         <label htmlFor="package-select" className="block text-sm font-medium text-gray-700 mb-2">Sélectionnez un colis :</label>
@@ -96,9 +114,9 @@ const TrackingDashboard: React.FC = () => {
 
       {trackingData ? (
         <>
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-slate-700">Données en temps réel pour <span className="text-emerald-600">{trackingData.packageId}</span></h2>
-                <button onClick={handleRefresh} disabled={isLoading} className="flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:bg-emerald-300">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+                <h2 className="text-xl font-semibold text-slate-700 text-center sm:text-left">Données en temps réel pour <span className="text-emerald-600">{trackingData.packageId}</span></h2>
+                <button onClick={handleRefresh} disabled={isLoading} className="flex items-center justify-center w-full sm:w-auto px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:bg-emerald-300">
                     <RefreshIcon className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Rafraîchir
                 </button>
