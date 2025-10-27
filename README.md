@@ -63,12 +63,16 @@ Fatima Zahra BOUKAMAR
 ```
 ## Project Structure so far (will be updated in each merge)
 ```
-- tracksecure-backend (empty project to regroup all the microservices)
-	- common (shared code like DTOs, constant .... in order to prevent duplication across all the services)
-		-DTOs (alert,tracking even, device, shipment)
-		-Contants (For shared constants usage)
-		-Exception ( Handling exceptions)
-		-Utils (helper classes and reusable across all services)
+tracksecure-backend/                  # Root project grouping all microservices
+│
+├── common/                           # Shared module to avoid code duplication
+│   ├── dtos/                         # Data Transfer Objects (Alert, TrackingEvent, Device, Shipment)
+│   ├── constants/                    # Shared constants
+│   ├── exceptions/                   # Common exception handling
+│   └── utils/                        # Helper and reusable utility classes
+│
+└── (other microservices to be added) # Example: sensors-payload, mqtt-rest-app, tracking-service...
+
 ```
 # Circuit Diagram
 ## Circuit Wiring
