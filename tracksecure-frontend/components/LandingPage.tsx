@@ -4,14 +4,15 @@ import Header from './Header';
 
 interface LandingPageProps {
     onNavigateToLogin: () => void;
+    onNavigateToContact: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigateToContact }) => {
     return (
         <div className="min-h-screen font-sans bg-white text-gray-800 overflow-hidden" style={{background: 'radial-gradient(circle at top left, #f0fdfa, white 60%)'}}>
             <div className="container mx-auto px-6 py-4">
                 {/* En-tête unifié */}
-                <Header onLoginClick={onNavigateToLogin} />
+                <Header onLoginClick={onNavigateToLogin} onContactClick={onNavigateToContact} />
 
                 {/* Section Hero */}
                 <main className="mt-16 md:mt-24">
