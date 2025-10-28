@@ -5,16 +5,15 @@ import TrackingDashboard from './components/tracking/TrackingDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Header from './components/Header';
 import LandingPage from './components/LandingPage';
+import ContactPage from './components/ContactPage';
+
+type UnauthenticatedPage = 'landing' | 'login' | 'contact';
 
 const App: React.FC = () => {
   const { user } = useAuth();
-  const [showLoginPage, setShowLoginPage] = useState(false);
+  const [currentPage, setCurrentPage] = useState<UnauthenticatedPage>('landing');
   const [trackedPackageIdByAdmin, setTrackedPackageIdByAdmin] = useState<string | null>(null);
 
-
-  const handleNavigateToLogin = () => {
-    setShowLoginPage(true);
-  };
 
   const handleTrackPackage = (packageId: string) => {
     setTrackedPackageIdByAdmin(packageId);
@@ -25,10 +24,20 @@ const App: React.FC = () => {
   };
 
   if (!user) {
-    if (showLoginPage) {
-      return <Login onBackToLanding={() => setShowLoginPage(false)} />;
+    switch (currentPage) {
+        case 'login':
+            return <Login onBackToLanding={() => setCurrentPage('landing')} />;
+        case 'contact':
+            return <ContactPage onBackToLanding={() => setCurrentPage('landing')} />;
+        case 'landing':
+        default:
+            return (
+                <LandingPage 
+                    onNavigateToLogin={() => setCurrentPage('login')}
+                    onNavigateToContact={() => setCurrentPage('contact')}
+                />
+            );
     }
-    return <LandingPage onNavigateToLogin={handleNavigateToLogin} />;
   }
 
   return (
