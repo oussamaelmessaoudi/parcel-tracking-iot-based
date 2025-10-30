@@ -36,10 +36,11 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
 
 
   const loadTrackingData = async () => {
+    if (!selectedPackageId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchTrackingData();
+      const data = await fetchTrackingData(selectedPackageId);
       setTrackingData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur inconnue est survenue.');
@@ -52,7 +53,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
   useEffect(() => {
     if (selectedPackageId) {
       loadTrackingData();
-      const interval = setInterval(() => loadTrackingData(), 30000); // Refresh every 30 seconds
+      const interval = setInterval(loadTrackingData, 30000); // Refresh every 30 seconds
       return () => clearInterval(interval);
     } else {
         setTrackingData(null);

@@ -6,16 +6,43 @@ const packages: PackageData[] = [
     { id: 'PKG-ABCDE', username: 'user', departureLocation: 'Entrepôt B, Marseille', pickupLocation: 'Client Y, Lille' },
 ];
 
+interface BackendSensorData {
+  dhtData: {
+    temperature: number;
+    humidity: number;
+    timestamp: string;
+  };
+  gpsData: {
+    longitude: number;
+    latitude: number;
+    satellites: number;
+    timestamp: string;
+  };
+}
+
+
 /**
  * Récupère les dernières données de suivi depuis le backend Spring Boot.
  */
-export const fetchTrackingData = async (): Promise<TrackingData> => {
+export const fetchTrackingData = async (packageId: string): Promise<TrackingData> => {
   const response = await fetch('http://localhost:1440/sensor/data');
   if (!response.ok) {
     throw new Error(`Erreur HTTP ! statut: ${response.status}`);
   }
-  const data: TrackingData = await response.json();
-  return data;
+  const backendData: BackendSensorData = await response.json();
+
+  const transformedData: TrackingData = {
+    temperature: backendData.dhtData.temperature,
+    humidity: backendData.dhtData.humidity,
+    coordinates: {
+      lat: backendData.gpsData.latitude,
+      lon: backendData.gpsData.longitude,
+    },
+    timestamp: backendData.dhtData.timestamp,
+    packageId: packageId,
+  };
+  
+  return transformedData;
 };
 
 
