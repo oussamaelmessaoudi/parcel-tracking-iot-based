@@ -6,8 +6,9 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import ContactPage from './components/ContactPage';
+import SolutionsPage from './components/SolutionsPage';
 
-type UnauthenticatedPage = 'landing' | 'login' | 'contact';
+type UnauthenticatedPage = 'landing' | 'login' | 'contact' | 'solutions';
 
 const App: React.FC = () => {
   const { user } = useAuth();
@@ -29,12 +30,15 @@ const App: React.FC = () => {
             return <Login onBackToLanding={() => setCurrentPage('landing')} />;
         case 'contact':
             return <ContactPage onBackToLanding={() => setCurrentPage('landing')} />;
+        case 'solutions':
+            return <SolutionsPage onBackToLanding={() => setCurrentPage('landing')} />;
         case 'landing':
         default:
             return (
                 <LandingPage 
                     onNavigateToLogin={() => setCurrentPage('login')}
                     onNavigateToContact={() => setCurrentPage('contact')}
+                    onNavigateToSolutions={() => setCurrentPage('solutions')}
                 />
             );
     }

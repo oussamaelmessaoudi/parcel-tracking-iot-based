@@ -7,6 +7,8 @@ interface HeaderProps {
     onLoginClick?: () => void;
     /** Fonction à appeler lorsque l'utilisateur clique sur le lien de contact. */
     onContactClick?: () => void;
+    /** Fonction à appeler lorsque l'utilisateur clique sur le lien des solutions. */
+    onSolutionsClick?: () => void;
 }
 
 /**
@@ -14,7 +16,7 @@ interface HeaderProps {
  * - En mode non authentifié (page d'accueil), il affiche les liens de navigation et un bouton de connexion.
  * - En mode authentifié (tableaux de bord), il affiche le nom de l'utilisateur et un bouton de déconnexion.
  */
-const Header: React.FC<HeaderProps> = ({ onLoginClick, onContactClick }) => {
+const Header: React.FC<HeaderProps> = ({ onLoginClick, onContactClick, onSolutionsClick }) => {
     const { user, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -68,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onContactClick }) => {
                 </div>
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center space-x-8">
-                    <a href="#" className="text-gray-600 hover:text-emerald-500 transition-colors">Solutions</a>
+                    <button onClick={onSolutionsClick} className="text-gray-600 hover:text-emerald-500 transition-colors">Solutions</button>
                     <button onClick={onContactClick} className="text-gray-600 hover:text-emerald-500 transition-colors">Contact</button>
                     <button onClick={onLoginClick} className="bg-emerald-400 hover:bg-emerald-500 text-white font-bold py-2 px-6 rounded-full transition duration-300 transform hover:scale-105">
                         Se Connecter
@@ -107,9 +109,12 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onContactClick }) => {
                 aria-modal="true"
             >
                 <div className="flex-grow space-y-4">
-                    <a href="#" className="block px-4 py-3 text-xl font-semibold text-gray-800 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                    <button 
+                        onClick={() => { onSolutionsClick?.(); setIsMobileMenuOpen(false); }} 
+                        className="w-full text-left block px-4 py-3 text-xl font-semibold text-gray-800 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                    >
                         Solutions
-                    </a>
+                    </button>
                     <button 
                         onClick={() => { onContactClick?.(); setIsMobileMenuOpen(false); }} 
                         className="w-full text-left block px-4 py-3 text-xl font-semibold text-gray-800 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
