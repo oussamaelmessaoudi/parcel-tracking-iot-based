@@ -53,7 +53,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
   useEffect(() => {
     if (selectedPackageId) {
       loadTrackingData();
-      const interval = setInterval(loadTrackingData, 30000); // Refresh every 30 seconds
+      const interval = setInterval(loadTrackingData, 10000); // Refresh every 10 seconds
       return () => clearInterval(interval);
     } else {
         setTrackingData(null);
