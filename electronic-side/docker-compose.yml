@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.15
+    container_name: mosquitto_broker
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./Mosquitto/config:/mosquitto/config
+      - ./Mosquitto/certs:/mosquitto/certs
+      - ./Mosquitto/data:/mosquitto/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 mosquitto_sub -h localhost -p 8883 -t '$SYS/#' -C 1 --cafile /mosquitto/certs/ca.crt || exit 1"]
+      interval: 10s
+      retries: 5
+      timeout: 10s
+      start_period: 10s
+  
+  zookeeper:
+    image: zookeeper:3.8.1
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - "2181:2181"
+    restart: always
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 30s
+      retries: 5
+      timeout: 10s
+  
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://:29092,HOST://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,HOST://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+  
+  mqttrestapp:
+    build:
+      context: ./MqttRestApp
+      dockerfile: Dockerfile
+    container_name: mqttrestapp
+    ports:
+      - "8080:8080"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    restart: on-failure
