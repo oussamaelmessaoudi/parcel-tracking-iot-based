@@ -93,19 +93,32 @@ Once it runs, you should see logs like:
 
 ![Starting Mosquitto Broker](/docs/assets/mosquitto1.png)
 
-## Dockerizing the Spring Boot MQTT Rest App :
-### Build the Docker image
-In order to run the MqttRestApp locally, you need to run these commands
-From the root of electronic-side/MqttRestApp
+## Dockerizing the stack :
+Run these commands from the electronic-side directory, either directly on powershell terminal or docker desktop terminal :
+```bash
+docker compose down -v
+docker compose build mqttrestapp --no-cache
+docker compose up -d
+````
+This will start:
+- Mosquitto broker first (TLS on port 8883) / should be on healthy status first
+- Zookeeper (port 2181) / should be also healthy first to start Kafka
+- Kafka Broker (port 9092)
+- Spring Boot MQTT REST App (port 8080) / depends on Mosquitto and Kafka
+
+## Check logs :
+
+You can monitor logs in real-time:
 
 ```bash
-docker build -t mqtt-rest-app .
+docker compose logs -f mosquitto
+docker compose logs -f mqttrestapp
+````
+When everything runs fine, you should see:
+```bash
+MQTT connected and subscriber to sensor topics
 ````
 
-### Run the container 
-```bash
-docker run -p 8080:8080 mqtt-rest-app
-````
 ### Expected console output
 
 ## ESP8266 Firmware (MQTT over TLS)
