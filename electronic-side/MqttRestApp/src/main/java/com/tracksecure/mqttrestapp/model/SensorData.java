@@ -21,6 +21,14 @@ public class SensorData {
         private double temperature;
         private double humidity;
         private LocalDateTime timestamp;
+        @Override
+        public  String toString() {
+            return "DhtData{" +
+                    "temperature=" + temperature +
+                    ", humidity=" + humidity +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
     }
 
     @Getter
@@ -33,5 +41,14 @@ public class SensorData {
         private double latitude;
         private int satellites;
         private LocalDateTime timestamp;
+        @Override
+        public  String toString() {
+            return "GpsData{" +
+                    "temperature=" + longitude +
+                    ", humidity=" + latitude +
+                    ", satellites=" + satellites +
+                    ", timestamp=" + timestamp +
+                    '}';
+        }
     }
 }

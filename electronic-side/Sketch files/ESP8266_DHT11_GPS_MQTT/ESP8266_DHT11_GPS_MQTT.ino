@@ -71,11 +71,16 @@ void setup() {
   }
   Serial.println("\nWiFi connected, IP: " + WiFi.localIP().toString());
 
-  // Optional: TLS certificate validation
+  // TLS certificate validation
+  // Option 1: Use proper certificate validation (recommended for production)
   // espClient.setTrustAnchors(new BearSSL::X509List(ca_cert));
-  espClient.setInsecure(); // for quick testing
+  
+  // Option 2: Skip certificate validation (for testing only)
+  espClient.setInsecure();
 
   mqttClient.setServer(mqttServer, mqttPort);
+  mqttClient.setKeepAlive(60);
+  mqttClient.setSocketTimeout(30);
 
   Serial.println("MQTT client ready with TLS");
 }
@@ -116,8 +121,12 @@ void loop() {
       payload_gps += "\"longitude\":" + String(gps.location.lng(), 6) + ",";
       payload_gps += "\"satellites\":" + String(gps.satellites.value());
       payload_gps += "}";
-      mqttClient.publish(topic_gps, payload_gps.c_str());
-      Serial.println("GPS Published: " + payload_gps);
+      
+      if (mqttClient.publish(topic_gps, payload_gps.c_str())) {
+        Serial.println("GPS Published: " + payload_gps);
+      } else {
+        Serial.println("GPS Publish FAILED!");
+      }
     } else {
       Serial.println("Waiting for valid GPS signal...");
     }
@@ -130,8 +139,12 @@ void loop() {
       payload_dht += "\"temperature\":" + String(temp, 2) + ",";
       payload_dht += "\"humidity\":" + String(humd, 2);
       payload_dht += "}";
-      mqttClient.publish(topic_dht, payload_dht.c_str());
-      Serial.println("DHT Published: " + payload_dht);
+      
+      if (mqttClient.publish(topic_dht, payload_dht.c_str())) {
+        Serial.println("DHT Published: " + payload_dht);
+      } else {
+        Serial.println("DHT Publish FAILED!");
+      }
     } else {
       Serial.println("Waiting for valid DHT data...");
     }
