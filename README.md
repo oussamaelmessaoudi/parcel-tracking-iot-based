@@ -93,6 +93,8 @@ Once it runs, you should see logs like:
 
 ![Starting Mosquitto Broker](/docs/assets/mosquitto1.png)
 
+You can skip this part, and run the full stack (Mosquitto, Zookeeper, Kafka, and Spring App) using the commands below.
+
 ## Dockerizing the stack :
 Run these commands from the electronic-side directory, either directly on powershell terminal or docker desktop terminal :
 ```bash
