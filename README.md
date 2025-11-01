@@ -119,6 +119,18 @@ When everything runs fine, you should see:
 MQTT connected and subscriber to sensor topics
 ````
 
+## Send static Data to Rest ( Test MQTT → Spring App) :
+Ila makantch dayza alimentation dyal esp (no real data), you can publish static data into the topic :
+
+```bash
+mosquitto_pub -h localhost -p 8883 \
+  -t "sensor/dht11" \
+  -m '{"temperature":25.5,"humidity":60.0}' \
+  -u oussama -P 123456 \
+  --cafile ./Mosquitto/certs/ca.crt \
+  --insecure
+````
+
 ### Expected console output
 
 ## ESP8266 Firmware (MQTT over TLS)
