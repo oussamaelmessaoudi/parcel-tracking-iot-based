@@ -10,7 +10,7 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests || { echo "Build failed"; exit 1; }
 
-FROM openjdk:21-jdk AS runner
+FROM eclipse-temurin:21-jdk AS runner
 
 WORKDIR /app
 
