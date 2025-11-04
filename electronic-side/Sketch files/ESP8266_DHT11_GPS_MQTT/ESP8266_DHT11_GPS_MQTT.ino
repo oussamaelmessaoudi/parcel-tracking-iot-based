@@ -18,7 +18,7 @@ const char* password = "32455847";
 
 // --- MQTT ---
 const char* mqttServer = "192.168.100.253";
-const int mqttPort = 8883; // TLS port
+const int mqttPort = 1883; //8883; // TLS port
 const char* mqttUser = "oussama";
 const char* mqttPassword = "123456";
 const char* topic_dht = "sensor/dht11";
@@ -27,28 +27,28 @@ const char* topic_gps = "sensor/gps";
 // --- TLS certificate (CA) ---
 const char ca_cert[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
-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
+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
+VyIHH5aG/rIVrukSBr5y
 -----END CERTIFICATE-----
 )EOF";
 
 // --- Clients ---
-BearSSL::WiFiClientSecure espClient;
+//BearSSL::WiFiClientSecure espClient;
+WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 DHT dht(DHTPIN, DHTTYPE);
 SoftwareSerial gpsSerial(RXD2, TXD2);
@@ -76,7 +76,7 @@ void setup() {
   // espClient.setTrustAnchors(new BearSSL::X509List(ca_cert));
   
   // Option 2: Skip certificate validation (for testing only)
-  espClient.setInsecure();
+  //espClient.setInsecure();
 
   mqttClient.setServer(mqttServer, mqttPort);
   mqttClient.setKeepAlive(60);

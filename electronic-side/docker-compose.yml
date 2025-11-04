@@ -4,6 +4,7 @@ services:
     image: eclipse-mosquitto:2.0.15
     container_name: mosquitto_broker
     ports:
+      - "1883:1883"
       - "8883:8883"
     volumes:
       - ./Mosquitto/config:/mosquitto/config
@@ -11,8 +12,8 @@ services:
       - ./Mosquitto/data:/mosquitto/data
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 mosquitto_sub -h localhost -p 8883 -t '$SYS/#' -C 1 --cafile /mosquitto/certs/ca.crt || exit 1"]
-      interval: 10s
+      test: ["CMD-SHELL", "timeout 5 mosquitto_pub -h localhost -p 1883 -t 'health/check' -m 'ok' -u oussama -P 123456 || exit 1"]
+      interval: 15s
       retries: 5
       timeout: 10s
       start_period: 10s

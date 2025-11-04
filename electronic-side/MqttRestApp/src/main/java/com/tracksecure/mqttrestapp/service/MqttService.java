@@ -24,24 +24,26 @@ public class MqttService {
     @Getter
     private final AtomicReference<SensorData> latestData = new AtomicReference<>(new SensorData());
 
-    @Value("${mqtt.broker.url:ssl://192.168.100.253:8883}")
+    @Value("${mqtt.broker.url}")
     private String brokerUrl;
 
-    @Value("${mqtt.broker.username:oussama}")
+    @Value("${mqtt.broker.username}")
     private String mqttUser;
 
-    @Value("${mqtt.broker.password:123456}")
+    @Value("${mqtt.broker.password}")
     private String mqttPassword;
 
-    @Value("${mqtt.client.id:springbootClient}")
+    @Value("${mqtt.client.id}")
     private String clientId;
 
-    @Value("${kafka.topic.sensor-data:sensor-data}")
+    @Value("${kafka.topic.sensor-data}")
     private String sensorDataTopic;
 
     @PostConstruct
     public void initMqtt() {
         try {
+            log.info("Attempting to connect to MQTT broker: {}", brokerUrl);
+            
             MqttConnectOptions options = new MqttConnectOptions();
             options.setUserName(mqttUser);
             options.setPassword(mqttPassword.toCharArray());
@@ -49,18 +51,20 @@ public class MqttService {
             options.setAutomaticReconnect(true);
             options.setConnectionTimeout(30);
             options.setKeepAliveInterval(60);
-            options.setSocketFactory(SSLSocketFactoryUtil.getSocketFactory());
             
-            // Disable hostname verification for Docker environment
-            options.setSSLHostnameVerifier((hostname, session) -> true);
+            // REMOVED SSL configuration for plain TCP connection
+            // options.setSocketFactory(SSLSocketFactoryUtil.getSocketFactory());
+            // options.setSSLHostnameVerifier((hostname, session) -> true);
 
             MqttClient client = new MqttClient(brokerUrl, clientId);
             client.connect(options);
+            
+            log.info("✅ Successfully connected to MQTT broker");
 
             // Subscribe to DHT11 sensor topic
             client.subscribe("sensor/dht11", (topic, msg) -> {
                 String payload = new String(msg.getPayload());
-                log.info("MQTT message received on '{}': {}", topic, payload);
+                log.info("📥 MQTT message received on '{}': {}", topic, payload);
 
                 try {
                     SensorData data = latestData.get();
@@ -86,17 +90,17 @@ public class MqttService {
 
                     // Publish to Kafka
                     kafkaPublisher.publish(sensorDataTopic, data);
-                    log.info("DHT data published to Kafka topic: {}", sensorDataTopic);
+                    log.info("✅ DHT data published to Kafka topic: {}", sensorDataTopic);
 
                 } catch (Exception e) {
-                    log.error("Error processing DHT data: {}", e.getMessage(), e);
+                    log.error("❌ Error processing DHT data: {}", e.getMessage(), e);
                 }
             });
 
             // Subscribe to GPS sensor topic
             client.subscribe("sensor/gps", (topic, msg) -> {
                 String payload = new String(msg.getPayload());
-                log.info("MQTT message received on '{}': {}", topic, payload);
+                log.info("📥 MQTT message received on '{}': {}", topic, payload);
 
                 try {
                     SensorData data = latestData.get();
@@ -122,18 +126,19 @@ public class MqttService {
 
                     // Publish to Kafka
                     kafkaPublisher.publish(sensorDataTopic, data);
-                    log.info("GPS data published to Kafka topic: {}", sensorDataTopic);
+                    log.info("✅ GPS data published to Kafka topic: {}", sensorDataTopic);
 
                 } catch (Exception e) {
-                    log.error("Error processing GPS data: {}", e.getMessage(), e);
+                    log.error("❌ Error processing GPS data: {}", e.getMessage(), e);
                 }
             });
 
-            log.info("MQTT connected and subscribed to sensor topics");
-            log.info("Broker: {}, Client ID: {}", brokerUrl, clientId);
+            log.info("✅ MQTT connected and subscribed to sensor topics");
+            log.info("📡 Broker: {}, Client ID: {}", brokerUrl, clientId);
 
         } catch (Exception e) {
-            log.error("Failed to initialize MQTT connection: {}", e.getMessage(), e);
+            log.error("❌ Failed to initialize MQTT connection: {}", e.getMessage(), e);
+            e.printStackTrace(); // Print full stack trace for debugging
         }
     }
 }
