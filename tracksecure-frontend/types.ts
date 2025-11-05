@@ -20,5 +20,19 @@ export interface PackageData {
 
 export interface User {
   username: string;
-  role: 'utilisateur' | 'administrateur';
+  role: string;
+}
+// addd BackendSensorData interface
+export interface BackendSensorData {
+  dhtData: {
+    temperature: number;
+    humidity: number;
+    timestamp: string;
+  };
+  gpsData: {
+    longitude: number;
+    latitude: number;
+    satellites: number;
+    timestamp: string;
+  };
 }

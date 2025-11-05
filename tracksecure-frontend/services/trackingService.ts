@@ -1,4 +1,4 @@
-import { TrackingData, PackageData } from '../types';
+import { TrackingData, PackageData, BackendSensorData } from '../types';
 
 // Simuler une table de colis en mémoire avec l'assignation utilisateur
 const packages: PackageData[] = [
@@ -6,26 +6,12 @@ const packages: PackageData[] = [
     { id: 'PKG-ABCDE', username: 'user', departureLocation: 'Entrepôt B, Marseille', pickupLocation: 'Client Y, Lille' },
 ];
 
-interface BackendSensorData {
-  dhtData: {
-    temperature: number;
-    humidity: number;
-    timestamp: string;
-  };
-  gpsData: {
-    longitude: number;
-    latitude: number;
-    satellites: number;
-    timestamp: string;
-  };
-}
-
-
 /**
  * Récupère les dernières données de suivi depuis le backend Spring Boot.
  */
 export const fetchTrackingData = async (packageId: string): Promise<TrackingData> => {
-  const response = await fetch('http://localhost:1440/sensor/data');
+  // const response = await fetch('http://localhost:8080/sensor-data');
+  const response = await fetch('/sensor-data');
   if (!response.ok) {
     throw new Error(`Erreur HTTP ! statut: ${response.status}`);
   }

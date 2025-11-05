@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        // add proxy for API requests
+        proxy: {
+          '/sensor-data': {
+            target: 'http://localhost:8080',
+            changeOrigin: true,
+          },
+      },
       },
       plugins: [react()],
       define: {
@@ -20,4 +27,5 @@ export default defineConfig(({ mode }) => {
         }
       }
     };
+    
 });
