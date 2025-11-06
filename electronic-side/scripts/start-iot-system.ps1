@@ -17,32 +17,28 @@ function Show-Banner {
 
 function Free-Ports {
     Write-Host "[*] Checking and freeing used ports (1883, 8080)..." -ForegroundColor Yellow
-
-    $ports = @(1883, 8080)
+    $ports = @(1884, 8080)
     foreach ($port in $ports) {
         $connections = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
         if ($connections) {
             foreach ($conn in $connections) {
                 $procId = $conn.OwningProcess
-                $procName = (Get-Process -Id $procId -ErrorAction SilentlyContinue).ProcessName
-                Write-Host "    Port $port in use by PID $procId ($procName)" -ForegroundColor Red
+                $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
+                $procName = $proc.ProcessName
+                Write-Host " Port $port in use by PID $procId ($procName)" -ForegroundColor Red
+                Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+                Write-Host " Killed process $procName (PID: $procId)" -ForegroundColor Yellow
             }
-
-            # Try WSL network reset instead of killing wslrelay
-            Write-Host "    Resetting WSL networking to release port $port..." -ForegroundColor Yellow
-            wsl -d Ubuntu bash -c "sudo ss -tulwn | grep $port && sudo fuser -k $port/tcp 2>/dev/null || true"
-            Start-Sleep -Seconds 2
-
-            Write-Host "    Port $port freed." -ForegroundColor Green
         } else {
-            Write-Host "    Port $port is free." -ForegroundColor Gray
+            Write-Host " Port $port is free." -ForegroundColor Gray
         }
     }
 
-    Start-Sleep -Seconds 3
-    Write-Host ""
-}
+    # Also kill wslrelay if stuck
+    Get-Process wslrelay -ErrorAction SilentlyContinue | Stop-Process -Force
 
+    Start-Sleep -Seconds 3
+}
 
 
 function Setup-PortForwarding {
@@ -76,7 +72,7 @@ function Start-System {
     
     Write-Host ""
     Write-Host "[*] Waiting for services to initialize (30 seconds)..." -ForegroundColor Yellow
-    Start-Sleep -Seconds 30
+    Start-Sleep -Seconds 90
     
     Write-Host ""
     Write-Host "[*] Container Status:" -ForegroundColor Cyan
