@@ -1,4 +1,4 @@
-com.tracksecure.mqttrestapp.Config ;
+package com.tracksecure.mqttrestapp.Config ;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
