@@ -1,5 +1,20 @@
 version: '3.8'
 services:
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+    ports:
+      - "9090:8080"
+    volumes:
+      - ./keycloak-config:/opt/keycloak/data/import
+      - keycloak_data:/opt/keycloak/data
+    command: start-dev --import-realm
+
   mosquitto:
     image: eclipse-mosquitto:2.0.15
     container_name: mosquitto_broker
@@ -73,3 +88,5 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     restart: on-failure
+volumes:
+  keycloak_data:
