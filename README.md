@@ -176,3 +176,92 @@ curl "http://lcoalhost:8080/sensor-data"
 
 ## Example JSON response
 ![JSON Response](/docs/assets/json.png)
+
+# Auth Service (Spring Boot & Keycloak)
+
+This service is the central **authentication (AuthN)** and **authorization (AuthZ)** component for the **Parcel Tracking Project**.  
+It uses **Spring Security** and **OAuth2** to protect API endpoints, with **Keycloak** as the identity provider.
+
+---
+
+##  Core Functionality
+
+- Secures endpoints using role-based access:
+    - `hasRole('admin')`
+    - `hasRole('user')`
+- Redirects unauthenticated users to the **Keycloak login page**.
+- Automatically reads roles from the user’s **Keycloak token**.
+
+---
+
+##  How to Run
+
+This service relies on the main project's **Docker stack** (Keycloak, Kafka, etc.) to be running first.
+
+### 1. Start Dependencies
+
+From the root of the `tracksecure-backend` project, start the entire stack:
+
+```bash
+# This starts Keycloak (at http://localhost:9090), Kafka, etc.
+docker-compose up -d
+```
+
+---
+
+### 2. Configure This Service
+
+Configuration is stored in:
+```
+src/main/resources/application.properties
+```
+
+It expects the **Keycloak client secret** to be provided as an **environment variable**, not hard-coded.
+
+```properties
+# This placeholder reads the secret
+spring.security.oauth2.client.registration.keycloak.client-secret=${KEYCLOAK_CLIENT_SECRET}
+```
+
+---
+
+### 3. Run the Service
+
+You must set the secret and then run the application.
+
+```bash
+# Set the secret (get this from the team lead)
+export KEYCLOAK_CLIENT_SECRET="your_secret_here"
+
+# Run the auth service
+mvn spring-boot:run
+```
+
+---
+
+## ⚙️ Automated Keycloak Setup
+
+You **do not need** to manually configure Keycloak.
+
+The main `docker-compose.yml` is set to automatically import the realm configuration from:
+
+```
+/keycloak-config/realm-export.json
+```
+
+This file defines:
+- All required clients
+- Roles (`admin`, `user`)
+- Token mappers
+
+---
+
+## 🧪 Test Endpoints
+
+| Endpoint                                  | Description | Role Requirement |
+|-------------------------------------------|--------------|------------------|
+| `GET http://localhost:8080/health`        | Admin endpoint | `admin` |
+| `GET http://localhost:8080/sensor/latest` | Admin endpoint| `admin` |
+| `GET http://localhost:8080/sensor/dht`    | Admin endpoint | `admin` |
+| `GET http://localhost:8080/sensor/gps`    | Admin endpoint | `admin` |
+
