@@ -23,4 +23,5 @@ message LocationData {
 message TelemetryData{
   double temperature = 1;
   double humidity = 2;
+  map<string, string> additional_data = 3;
 }
