@@ -51,7 +51,7 @@ function Setup-PortForwarding {
     netsh interface portproxy delete v4tov4 listenport=1883 listenaddress=0.0.0.0 2>$null
     
     netsh interface portproxy add v4tov4 listenport=8080 listenaddress=0.0.0.0 connectport=8080 connectaddress=$wslIP | Out-Null
-    netsh interface portproxy add v4tov4 listenport=1883 listenaddress=0.0.0.0 connectport=1883 connectaddress=$wslIP | Out-Null
+    netsh interface portproxy add v4tov4 listenport=1884 listenaddress=0.0.0.0 connectport=1883 connectaddress=$wslIP | Out-Null
     
     Write-Host "    [OK] Port forwarding configured" -ForegroundColor Green
     Write-Host ""
