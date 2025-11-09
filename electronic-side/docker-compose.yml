@@ -7,7 +7,7 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - KEYCLOAK_CLIENT_SECRET=3NM0HHKFeGLdikolptNugKyLfNhjwIVh
     ports:
       - "9090:8080"
     volumes:
@@ -19,7 +19,7 @@ services:
     image: eclipse-mosquitto:2.0.15
     container_name: mosquitto_broker
     ports:
-      - "1883:1883"
+      - "1884:1883"
       - "8883:8883"
     volumes:
       - ./Mosquitto/config:/mosquitto/config
@@ -84,6 +84,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092

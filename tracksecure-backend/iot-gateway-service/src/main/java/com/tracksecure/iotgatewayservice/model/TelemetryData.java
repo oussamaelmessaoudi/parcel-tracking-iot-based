@@ -1,4 +1,4 @@
 package com.tracksecure.iotgatewayservice.model;
 
-public class DeviceMessage {
+public class TelemetryData {
 }
