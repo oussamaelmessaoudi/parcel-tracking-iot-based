@@ -10,9 +10,11 @@ const packages: PackageData[] = [
  * Récupère les dernières données de suivi depuis le backend Spring Boot.
  */
 export const fetchTrackingData = async (packageId: string): Promise<TrackingData> => {
-  // const response = await fetch('http://localhost:8080/sensor-data');
-  const response = await fetch('/sensor-data');
+  const response = await fetch('/api/sensor/latest'); // Point de terminaison mis à jour
   if (!response.ok) {
+    if (response.status === 403) {
+        throw new Error(`Accès non autorisé (statut: 403). Le rôle de l'utilisateur n'a peut-être pas la permission.`);
+    }
     throw new Error(`Erreur HTTP ! statut: ${response.status}`);
   }
   const backendData: BackendSensorData = await response.json();
