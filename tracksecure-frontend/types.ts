@@ -21,6 +21,7 @@ export interface PackageData {
 export interface User {
   username: string;
   role: string;
+  email: string;
 }
 // addd BackendSensorData interface
 export interface BackendSensorData {

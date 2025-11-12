@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         // add proxy for API requests
         proxy: {
-          '/sensor-data': {
+          '/api': {
             target: 'http://localhost:8080',
             changeOrigin: true,
           },
@@ -23,7 +23,8 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          // Fix: `__dirname` is not available in ES modules. `path.resolve('.')` is used instead to correctly resolve the project root.
+          '@': path.resolve('.'),
         }
       }
     };
