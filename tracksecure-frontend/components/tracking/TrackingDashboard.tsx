@@ -15,7 +15,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
   const { user } = useAuth();
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
-  const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
+  const [trackingHistory, setTrackingHistory] = useState<TrackingData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,36 +35,50 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
   }, [user, onBackToAdmin, selectedPackageIdFromAdmin]);
 
 
-  const loadTrackingData = async () => {
+  const loadTrackingData = async (isInitialLoad: boolean = false) => {
     if (!selectedPackageId) return;
-    setIsLoading(true);
-    setError(null);
+    if (isInitialLoad) {
+        setIsLoading(true);
+        setError(null);
+    }
+    
     try {
       const data = await fetchTrackingData(selectedPackageId);
-      setTrackingData(data);
+      setTrackingHistory(prev => {
+        // Éviter d'ajouter des points de données en double si l'horodatage est le même
+        if (prev.length > 0 && prev[prev.length - 1].timestamp === data.timestamp) {
+            return prev;
+        }
+        return [...prev, data];
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur inconnue est survenue.');
+      if(isInitialLoad) setError(err instanceof Error ? err.message : 'Une erreur inconnue est survenue.');
       console.error(err);
     } finally {
-      setIsLoading(false);
+      if(isInitialLoad) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (selectedPackageId) {
-      loadTrackingData();
-      const interval = setInterval(loadTrackingData, 10000); // Refresh every 10 seconds
-      return () => clearInterval(interval);
+      setTrackingHistory([]); // Vider l'historique pour le nouveau colis
+      loadTrackingData(true); // Charger les données initiales
+      const interval = setInterval(() => loadTrackingData(false), 5000); // Rafraîchir toutes les 5 secondes
+      return () => clearInterval(interval); // Nettoyer l'intervalle
     } else {
-        setTrackingData(null);
+        setTrackingHistory([]);
     }
   }, [selectedPackageId]);
 
   const handleRefresh = () => {
     if (selectedPackageId) {
-      loadTrackingData();
+      // Recharger complètement les données pour le colis sélectionné
+      setTrackingHistory([]);
+      loadTrackingData(true);
     }
   };
+
+  const latestData = trackingHistory.length > 0 ? trackingHistory[trackingHistory.length - 1] : null;
   
   return (
     <div>
@@ -96,7 +110,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
         </select>
       </div>
 
-      {isLoading && !trackingData && <div className="text-center text-gray-600 py-4">Chargement des données...</div>}
+      {isLoading && trackingHistory.length === 0 && <div className="text-center text-gray-600 py-4">Chargement des données...</div>}
       
       {error && (
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg" role="alert">
@@ -113,10 +127,10 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
       )}
 
 
-      {trackingData ? (
+      {latestData ? (
         <>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
-                <h2 className="text-xl font-semibold text-slate-700 text-center sm:text-left">Données en temps réel pour <span className="text-emerald-600">{trackingData.packageId}</span></h2>
+                <h2 className="text-xl font-semibold text-slate-700 text-center sm:text-left">Données en temps réel pour <span className="text-emerald-600">{latestData.packageId}</span></h2>
                 <button onClick={handleRefresh} disabled={isLoading} className="flex items-center justify-center w-full sm:w-auto px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-emerald-500 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:bg-emerald-300">
                     <RefreshIcon className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Rafraîchir
@@ -126,24 +140,24 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
                 <DashboardCard
                     icon={<ThermometerIcon className="h-8 w-8 text-red-500" />}
                     title="Température"
-                    value={`${trackingData.temperature.toFixed(1)}°C`}
-                    footerText={`Dernière mise à jour : ${new Date(trackingData.timestamp).toLocaleTimeString()}`}
+                    value={`${latestData.temperature.toFixed(1)}°C`}
+                    footerText={`Dernière mise à jour : ${new Date(latestData.timestamp).toLocaleTimeString()}`}
                 />
                 <DashboardCard
                     icon={<DropletIcon className="h-8 w-8 text-blue-500" />}
                     title="Humidité"
-                    value={`${trackingData.humidity.toFixed(1)}%`}
+                    value={`${latestData.humidity.toFixed(1)}%`}
                     footerText="Niveau optimal"
                 />
                 <DashboardCard
                     icon={<MapPinIcon className="h-8 w-8 text-green-500" />}
                     title="Localisation"
-                    value={`${trackingData.coordinates.lat.toFixed(4)}, ${trackingData.coordinates.lon.toFixed(4)}`}
+                    value={`${latestData.coordinates.lat.toFixed(4)}, ${latestData.coordinates.lon.toFixed(4)}`}
                     footerText="Coordonnées GPS"
                 />
             </div>
             <div className="mt-6">
-                <MapCard coordinates={trackingData.coordinates} />
+                <MapCard coordinatesHistory={trackingHistory.map(d => d.coordinates)} />
             </div>
         </>
       ) : !isLoading && !error && (

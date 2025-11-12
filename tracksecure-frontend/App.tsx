@@ -7,8 +7,9 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import ContactPage from './components/ContactPage';
 import SolutionsPage from './components/SolutionsPage';
+import Signup from './components/Signup';
 
-type UnauthenticatedPage = 'landing' | 'login' | 'contact' | 'solutions';
+type UnauthenticatedPage = 'landing' | 'login' | 'contact' | 'solutions' | 'signup';
 
 const App: React.FC = () => {
   const { user } = useAuth();
@@ -27,7 +28,9 @@ const App: React.FC = () => {
   if (!user) {
     switch (currentPage) {
         case 'login':
-            return <Login onBackToLanding={() => setCurrentPage('landing')} />;
+            return <Login onBackToLanding={() => setCurrentPage('landing')} onNavigateToSignup={() => setCurrentPage('signup')} />;
+        case 'signup':
+            return <Signup onNavigateToLogin={() => setCurrentPage('login')} />;
         case 'contact':
             return <ContactPage onBackToLanding={() => setCurrentPage('landing')} />;
         case 'solutions':
