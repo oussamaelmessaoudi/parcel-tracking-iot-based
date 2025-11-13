@@ -11,16 +11,13 @@ export default defineConfig(({ mode }) => {
         // add proxy for API requests
         proxy: {
           '/api': {
-            target: 'http://localhost:8080',
+            target: 'http://mqttrestapp:8080',
             changeOrigin: true,
           },
       },
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      
       resolve: {
         alias: {
           // Fix: `__dirname` is not available in ES modules. `path.resolve('.')` is used instead to correctly resolve the project root.
