@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
         // add proxy for API requests
         proxy: {
           '/api': {
-            target: 'http://mqttrestapp:8080',
+            target: 'http://mqttrestapp:8081',
             changeOrigin: true,
           },
       },
