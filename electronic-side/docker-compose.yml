@@ -1,6 +1,17 @@
 version: '3.8'
 services:
 
+  frontend:
+    build:
+      context: ../tracksecure-frontend
+      dockerfile: Dockerfile
+    container_name: tracksecure-frontend
+    ports:
+      - "3000:80"
+    # depends_on:
+    #   - mqttrestapp
+    restart: always
+
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak

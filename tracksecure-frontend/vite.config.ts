@@ -10,20 +10,18 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         // add proxy for API requests
         proxy: {
-          '/sensor-data': {
-            target: 'http://localhost:8080',
+          '/api': {
+            target: 'http://mqttrestapp:8080',
             changeOrigin: true,
           },
       },
       },
       plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
+      
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          // Fix: `__dirname` is not available in ES modules. `path.resolve('.')` is used instead to correctly resolve the project root.
+          '@': path.resolve('.'),
         }
       }
     };

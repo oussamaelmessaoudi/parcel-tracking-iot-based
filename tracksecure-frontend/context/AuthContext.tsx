@@ -6,6 +6,7 @@ import { User } from '../types';
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<void>;
+  signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   authError: string | null;
   isAuthenticating: boolean;
@@ -35,11 +36,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const signup = async (username: string, email: string, password: string) => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    try {
+      await authService.createUser(username, password, email);
+      const userData = await authService.login(username, password);
+      setUser(userData);
+    } catch (error) {
+      if (error instanceof Error) {
+        setAuthError(error.message);
+      } else {
+        setAuthError('Une erreur inconnue est survenue.');
+      }
+      throw error;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
   };
 
-  const value = { user, login, logout, authError, isAuthenticating };
+  const value = { user, login, signup, logout, authError, isAuthenticating };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

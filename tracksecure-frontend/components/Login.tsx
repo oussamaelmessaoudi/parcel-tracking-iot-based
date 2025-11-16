@@ -4,9 +4,10 @@ import { LogoIcon } from './Icons';
 
 interface LoginProps {
     onBackToLanding: () => void;
+    onNavigateToSignup: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
+const Login: React.FC<LoginProps> = ({ onBackToLanding, onNavigateToSignup }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, authError, isAuthenticating } = useAuth();
@@ -78,6 +79,14 @@ const Login: React.FC<LoginProps> = ({ onBackToLanding }) => {
             </button>
           </div>
         </form>
+         <div className="text-sm text-center">
+            <button
+                onClick={onNavigateToSignup}
+                className="font-medium text-emerald-600 hover:text-emerald-500"
+            >
+                Pas encore de compte ? S'inscrire
+            </button>
+        </div>
       </div>
     </div>
   );
