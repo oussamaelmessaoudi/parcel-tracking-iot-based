@@ -265,3 +265,37 @@ This file defines:
 | `GET http://localhost:8080/sensor/dht`    | Admin endpoint | `admin` |
 | `GET http://localhost:8080/sensor/gps`    | Admin endpoint | `admin` |
 
+## Important Configuration Note
+
+### Keycloak Hostname Resolution
+
+To ensure proper communication between your browser and the Keycloak container, you need to add a hostname mapping to your system's hosts file. This resolves the conflict between the Docker container's internal network name and your host machine's ability to resolve the `keycloak` hostname.
+
+**Add the following entry to your hosts file:**
+
+**Windows:**
+1. Open Notepad as Administrator
+2. Open file: `C:\Windows\System32\drivers\etc\hosts`
+3. Add this line at the end:
+```
+   127.0.0.1 keycloak
+```
+4. Save and close
+
+**Mac/Linux:**
+1. Open terminal
+2. Run: `sudo nano /etc/hosts`
+3. Add this line:
+```
+   127.0.0.1 keycloak
+```
+4. Save (Ctrl+X, then Y, then Enter)
+
+**After editing the hosts file:**
+- Close all browser windows
+- Restart your browser
+- Access the application
+
+> **Why is this needed?** 
+> The Spring Boot application running inside Docker uses the service name `keycloak` to communicate with the Keycloak container. However, when Keycloak redirects your browser for authentication, the browser also needs to resolve the `keycloak` hostname. Adding this entry to your hosts file ensures both the container and your browser can properly resolve the Keycloak service.
+
