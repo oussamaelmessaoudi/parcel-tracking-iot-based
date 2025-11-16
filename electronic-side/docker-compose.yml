@@ -8,8 +8,8 @@ services:
     container_name: tracksecure-frontend
     ports:
       - "3000:80"
-    # depends_on:
-    #   - mqttrestapp
+    depends_on:
+      - mqttrestapp
     restart: always
 
   keycloak:
@@ -20,11 +20,12 @@ services:
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KEYCLOAK_CLIENT_SECRET=3NM0HHKFeGLdikolptNugKyLfNhjwIVh
     ports:
-      - "9090:8080"
+      - "8080:8080"
     volumes:
       - ./keycloak-config:/opt/keycloak/data/import
       - keycloak_data:/opt/keycloak/data
-    command: start-dev --import-realm
+    command: ["start-dev","--import-realm"]
+
 
   mosquitto:
     image: eclipse-mosquitto:2.0.15
@@ -89,7 +90,7 @@ services:
       dockerfile: Dockerfile
     container_name: mqttrestapp
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       mosquitto:
         condition: service_healthy
@@ -100,6 +101,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/parcel-tracking-auth
     restart: on-failure
 volumes:
   keycloak_data:
