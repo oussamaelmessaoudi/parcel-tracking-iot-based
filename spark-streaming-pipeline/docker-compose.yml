@@ -33,33 +33,6 @@ services:
       timeout: 5s
       retries: 15
 
-  postgres:
-    image: postgres:14
-    container_name: postgres
-    networks:
-      - parcel-net
-    environment:
-      POSTGRES_USER: sparkuser
-      POSTGRES_PASSWORD: sparkpassword
-      POSTGRES_DB: parcel_db
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sparkuser -d parcel_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - parcel-net
-    depends_on:
-      - postgres
-
   # Data generator to create sample data
   data-generator:
     image: confluentinc/cp-kafka:7.3.0
@@ -80,6 +53,31 @@ services:
       echo 'Topics created successfully' &&
       tail -f /dev/null
       "
+  # Ajoutez ce service à votre docker-compose.yml existant
+
+  # Producer MongoDB Atlas → Kafka
+  mongodproducerb-:
+    image: jupyter/pyspark-notebook
+    container_name: mongodb-producer
+    depends_on:
+      - kafka
+      - data-generator
+    networks:
+      - parcel-net
+    environment:
+      - MONGODB_URI=mongodb+srv://fatimazahraboukamar23_db_user:QTLfmphbMT8UvbDb@iotcluster.yv9yxtt.mongodb.net/tracksecure?retryWrites=true&w=majority
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    volumes:
+      - .:/home/jovyan/work
+    command: >
+      sh -c "
+      echo 'Waiting for Kafka and MongoDB...' &&
+      sleep 40 &&
+      echo 'Installing dependencies...' &&
+      pip install kafka-python pymongo &&
+      echo 'Starting MongoDB Atlas to Kafka Producer...' &&
+      python /home/jovyan/work/producer_mongodb.py
+      "
 
   spark-processor:
     image: jupyter/pyspark-notebook
@@ -88,7 +86,6 @@ services:
       - "4041:4040"
     depends_on:
       - kafka
-      - postgres
       - data-generator
     networks:
       - parcel-net
@@ -99,13 +96,16 @@ services:
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_TOPICS=gps,temperature,battery
+      - MONGODB_URI=mongodb+srv://fatimazahraboukamar23_db_user:QTLfmphbMT8UvbDb@iotcluster.yv9yxtt.mongodb.net/tracksecure?retryWrites=true&w=majority
+      - MONGODB_DATABASE=tracksecure
+      - MONGODB_PROC_COLLECTION=processed_predictions
     command: >
       sh -c "
       echo 'Waiting for services...' &&
       sleep 45 &&
-      pip install kafka-python==2.0.2 &&
+      pip install kafka-python==2.0.2 pymongo &&
       spark-submit \
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.5.0 \
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.mongodb.spark:mongo-spark-connector_2.12:3.0.1 \
       /app/process.py
       "
 
@@ -117,11 +117,10 @@ services:
       - "4042:4040"
     depends_on:
       - kafka
-      - postgres
     networks:
       - parcel-net
     environment:
-      SPARK_OPTS: "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.postgresql:postgresql:42.5.0"
+      SPARK_OPTS: "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
     volumes:
       - .:/home/jovyan/work
 

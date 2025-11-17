@@ -43,3 +43,4 @@ __pycache__/
 
 # Arduino sketches and cert headers
 electronic-side/SensorsPayload/
+spark-streaming-pipeline/models
