@@ -9,15 +9,15 @@
         <module name="auth-service" />
         <module name="event-processor-service" />
         <module name="alert-service" />
-        <module name="iot-gateway-service" />
         <module name="device-management-service" />
-        <module name="analytics-service" />
         <module name="api-gateway" />
+        <module name="analytics-service" />
         <module name="tracking-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="common" target="17" />
+      <module name="iot-gateway-service" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

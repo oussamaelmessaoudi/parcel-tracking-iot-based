@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/iot-gateway-service/iot-gateway-service.iml" filepath="$PROJECT_DIR$/iot-gateway-service/iot-gateway-service.iml" />
+      <module fileurl="file://$PROJECT_DIR$/event-processor-service/event-processor-service.iml" filepath="$PROJECT_DIR$/event-processor-service/event-processor-service.iml" />
       <module fileurl="file://$PROJECT_DIR$/tracksecure-backend.iml" filepath="$PROJECT_DIR$/tracksecure-backend.iml" />
     </modules>
   </component>
