@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package com.tracksecure.proto;
+
+option java_package = "com.tracksecure.proto";
+option java_outer_classname = "ProcessedEventProto";
+
+message ProcessedEvent {
+  string event_id = 1;
+  string device_id = 2;
+  int64 timestamp = 3;
+  int64 processing_timestamp = 4;
+
+  LocationData location = 5;
+  TelemetryData telemetry = 6;
+  EnrichedData enriched_data = 7;
+  ValidationResult validation = 8;
+
+  string event_type = 9;
+  EventStatus status = 10;
+}
+
+message LocationData {
+  double latitude = 1;
+  double longitude = 2;
+  int32 satellites = 3;
+
+  string country = 4;
+  string city = 5;
+  string address = 6;
+  string timezone = 7;
+}
+
+message TelemetryData {
+  float temperature = 1;
+  float humidity = 2;
+  map<string, string> additional_data = 3;
+}
+
+message EnrichedData {
+  float distance_from_previous = 1;
+  int64 time_since_previous = 2;
+  bool is_moving = 3;
+  bool is_stationary = 4;
+  float calculated_speed = 5;
+  string motion_state = 6;
+
+  bool is_anomaly = 7;
+  repeated string anomaly_reasons = 8;
+
+  string weather_condition = 9;
+}
+
+message ValidationResult {
+  bool is_valid = 1;
+  repeated string validation_errors = 2;
+  repeated string warnings = 3;
+  float confidence_score = 4;
+}
+
+enum EventStatus {
+  UNKNOWN = 0;
+  VALID = 1;
+  INVALID = 2;
+  SUSPICIOUS = 3;
+  ENRICHED = 4;
+}
