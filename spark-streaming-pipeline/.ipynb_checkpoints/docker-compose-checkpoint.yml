@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+
+  zookeeper:
+    image: zookeeper:3.8.1
+    container_name: zookeeper
+    networks:
+      - parcel-net
+    environment:
+      ZOO_ALLOW_ANONYMOUS_LOGIN: "yes"
+    ports:
+      - "2181:2181"
+    restart: always
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - parcel-net
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://:29092,HOST://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: always
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  data-generator:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: data-generator
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - parcel-net
+    volumes:
+      - ./start_data_gen.sh:/app/start_data_gen.sh
+    command: ["/bin/bash", "/app/start_data_gen.sh"]
+
+  spark-processor:
+    image: jupyter/pyspark-notebook:latest
+    container_name: spark-processor
+    ports:
+      - "4041:4040"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      data-generator:
+        condition: service_started
+    networks:
+      - parcel-net
+    volumes:
+      - ./consumer.py:/app/consumer.py
+      - ./models:/app/models
+      - ./checkpoints:/app/checkpoints
+      - ./jars:/app/jars
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_TOPICS: gps,temperature
+    command: >
+      bash -lc "
+      echo 'Installing SynapseML...' &&
+      pip install synapseml==0.11.4 &&
+      echo 'Downloading required JARs...' &&
+      mkdir -p /app/jars &&
+      curl -L -o /app/jars/synapseml_2.12-0.11.4.jar https://repo1.maven.org/maven2/com/microsoft/azure/synapseml_2.12/0.11.4/synapseml_2.12-0.11.4.jar &&
+      curl -L -o /app/jars/spark-avro_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.12/3.5.0/spark-avro_2.12-3.5.0.jar &&
+      curl -L -o /app/jars/spark-sql-kafka-0-10_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar &&
+      echo 'Launching Spark job...' &&
+      spark-submit --master local[*] --jars /app/jars/synapseml_2.12-0.11.4.jar,/app/jars/spark-avro_2.12-3.5.0.jar,/app/jars/spark-sql-kafka-0-10_2.12-3.5.0.jar /app/consumer.py
+      "
+
+  spark-notebook:
+    image: jupyter/pyspark-notebook:latest
+    container_name: spark-notebook
+    networks:
+      - parcel-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8888:8888"
+      - "4042:4040"
+    volumes:
+      - .:/home/jovyan/work
+    command: >
+      bash -lc "
+      echo 'Installing SynapseML...' &&
+      pip install synapseml==0.11.4 &&
+      echo 'Downloading required JARs...' &&
+      mkdir -p /home/jovyan/work/jars &&
+      curl -L -o /home/jovyan/work/jars/synapseml_2.12-0.11.4.jar https://repo1.maven.org/maven2/com/microsoft/azure/synapseml_2.12/0.11.4/synapseml_2.12-0.11.4.jar &&
+      curl -L -o /home/jovyan/work/jars/spark-avro_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-avro_2.12/3.5.0/spark-avro_2.12-3.5.0.jar &&
+      curl -L -o /home/jovyan/work/jars/spark-sql-kafka-0-10_2.12-3.5.0.jar https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar &&
+      echo 'Starting Jupyter Notebook...' &&
+      start-notebook.sh --NotebookApp.token=''
+      "
+
+networks:
+  parcel-net:
+    driver: bridge

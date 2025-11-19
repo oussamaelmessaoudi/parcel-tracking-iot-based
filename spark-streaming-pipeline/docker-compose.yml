@@ -1,19 +1,21 @@
-version: '3.7'
+version: "3.9"
+
 services:
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
+    image: zookeeper:3.8.1
     container_name: zookeeper
     networks:
       - parcel-net
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  kafka:
-    image: confluentinc/cp-kafka:7.3.0
-    container_name: kafka
+      ZOO_ALLOW_ANONYMOUS_LOGIN: "yes"
     ports:
+<<<<<<< HEAD
+      - "2181:2181"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"]
+=======
       - "9092:9092"
     depends_on:
       - zookeeper
@@ -46,19 +48,106 @@ services:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sparkuser -d parcel_db"]
+>>>>>>> 65b414ae64dcf8697ad125c249e20560e4fdea91
       interval: 10s
       timeout: 5s
       retries: 5
 
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
     networks:
       - parcel-net
+    ports:
+      - "9092:9092"        # accès depuis Windows
+      - "29092:29092"      # accès depuis les conteneurs Docker
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # LISTENERS internes + externes
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: always
+
+  spark-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spark-processor
     depends_on:
-      - postgres
+      - kafka
+    networks:
+      - parcel-net
+    ports:
+      - "4041:4040"
+    volumes:
+      - ./consumer.py:/app/consumer.py
+      - ./models:/app/models
+      - ./checkpoints:/app/checkpoints
+      - ./jars:/app/jars
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    command: >
+      bash -c "/app/wait-for-it.sh kafka:29092 --timeout=60 --strict -- && \
+      spark-submit --master local[*] \
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+      /app/consumer.py"
+
+  spark-notebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spark-notebook
+    depends_on:
+      - kafka
+    networks:
+      - parcel-net
+    ports:
+      - "8888:8888"
+      - "4042:4040"
+
+    # --- FIX BEGINS HERE ---
+    # 1. Set the working directory to the mounted volume (owned by jovyan)
+    working_dir: /home/jovyan/work
+
+    volumes:
+      # 2. Map your current host folder (.) to that specific directory
+      - .:/home/jovyan/work
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+
+    # 3. Environment variable to help Jupyter know where to look
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      NOTEBOOK_DIR: "/home/jovyan/work"
+    # -----------------------
+
+    command: >
+      bash -lc "/app/wait-for-it.sh kafka:29092 --timeout=60 --strict -- && \
+      start-notebook.sh --NotebookApp.token='' --NotebookApp.notebook_dir='/home/jovyan/work'"
+
+  producer:
+    image: python:3.11
+    container_name: producer
+    depends_on:
+      - kafka
+    networks:
+      - parcel-net
+    environment:
+      KAFKA_HOST: kafka:29092
+    volumes:
+      - ./producer.py:/app/producer.py
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    working_dir: /app
+    command: >
+      bash -c "/app/wait-for-it.sh kafka:29092 --timeout=60 --strict -- && \
+      pip install --no-cache-dir kafka-python && \
+      python producer.py"
 
   # Data generator to create sample data
   data-generator:
