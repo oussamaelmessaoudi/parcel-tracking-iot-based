@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package com.tracksecure.proto;
+
+option java_package = "com.tracksecure.proto";
+option java_outer_classname = "AlertEventProto";
+
+message AlertEvent {
+  string alert_id = 1;
+  string device_id = 2;
+  string rule_id = 3;
+  int64 timestamp = 4;
+  AlertType type = 5;
+  AlertSeverity severity = 6;
+  string title = 7;
+  string message = 8;
+  LocationData location = 9;
+  map<string, string> metadata = 10;
+  bool acknowledged = 11;
+}
+
+message LocationData {
+  double latitude = 1;
+  double longitude = 2;
+  int32 satellites = 3;
+}
+
+enum AlertType {
+  UNKNOWN_TYPE = 0;
+  GEOFENCE_ENTRY = 1;
+  GEOFENCE_EXIT = 2;
+  DEVICE_OFFLINE = 3;
+  ANOMALY_DETECTED = 4;
+  TEMPERATURE_THRESHOLD = 5;
+  HUMIDITY_THRESHOLD = 6;
+  CUSTOM_RULE = 7;
+}
+
+enum AlertSeverity {
+  UNKNOWN_SEVERITY = 0;
+  INFO = 1;
+  WARNING = 2;
+  CRITICAL = 3;
+  EMERGENCY = 4;
+}
