@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.OneHotEncoderModel","timestamp":1763587811643,"sparkVersion":"3.5.0","uid":"OneHotEncoder_e5dbdeec6663","paramMap":{"outputCol":"Risk Factor_vec","inputCol":"Risk Factor_idx"},"defaultParamMap":{"dropLast":true,"handleInvalid":"error","outputCol":"OneHotEncoder_e5dbdeec6663__output"}}
