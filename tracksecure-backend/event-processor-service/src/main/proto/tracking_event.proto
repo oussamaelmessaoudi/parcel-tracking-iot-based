@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "processed_event.proto";
+
+package com.tracksecure.proto;
+
+option java_package = "com.tracksecure.proto";
+option java_outer_classname = "TrackingEventProto";
+
+message TrackingEvent {
+  string device_id = 1;
+  string event_id = 2;
+  int64 timestamp = 3;
+
+  com.tracksecure.proto.LocationData location = 4;
+  com.tracksecure.proto.TelemetryData telemetry = 5;
+
+  string event_type = 6;
+}

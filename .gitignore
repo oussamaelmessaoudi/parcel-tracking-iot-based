@@ -33,3 +33,14 @@ __pycache__/
 *.pyc
 
 *.csv
+
+
+# Sensitive certs and keys
+*.crt
+*.jks
+*.pem
+*.key
+
+
+# Arduino sketches and cert headers
+*.db
