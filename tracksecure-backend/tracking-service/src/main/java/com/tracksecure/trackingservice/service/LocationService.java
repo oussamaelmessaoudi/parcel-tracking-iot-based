@@ -6,7 +6,7 @@ import com.tracksecure.trackingservice.dto.TrackingHistoryDTO;
 import com.tracksecure.trackingservice.mapper.LocationMapper;
 import com.tracksecure.trackingservice.model.Location;
 import com.tracksecure.trackingservice.repository.LocationRepository;
-import com.tracksecure.trackingservice.validators.DeviceNotFoundException;
+import com.tracksecure.trackingservice.dto.validators.DeviceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

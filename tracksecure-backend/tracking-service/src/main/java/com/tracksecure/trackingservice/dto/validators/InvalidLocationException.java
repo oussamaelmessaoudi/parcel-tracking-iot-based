@@ -1,4 +1,4 @@
-package com.tracksecure.trackingservice.validators;
+package com.tracksecure.trackingservice.dto.validators;
 
 public class InvalidLocationException extends RuntimeException {
     public InvalidLocationException(String message) {

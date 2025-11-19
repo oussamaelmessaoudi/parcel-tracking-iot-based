@@ -1,6 +1,7 @@
 package com.tracksecure.trackingservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tracksecure.trackingservice.dto.validators.LocationValidationGroup;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -37,7 +38,6 @@ public class LocationRequestDTO {
 
     @JsonProperty("satellites")
     private Integer satellites;
-
 
     @JsonProperty("temperature")
     private Float temperature;

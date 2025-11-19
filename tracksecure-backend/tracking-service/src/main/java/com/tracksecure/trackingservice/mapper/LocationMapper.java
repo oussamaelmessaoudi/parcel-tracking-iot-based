@@ -8,6 +8,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface LocationMapper {
@@ -17,7 +19,6 @@ public interface LocationMapper {
     @Mapping(target = "timestamp", expression = "java(mapTimestamp(dto.getTimestamp()))")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "session", ignore = true)
-    @Mapping(target = "additionalData", ignore = true)
     Location toEntity(LocationRequestDTO dto);
 
     @Mapping(target = "sessionId", expression = "java(getSessionId(entity))")
@@ -25,6 +26,10 @@ public interface LocationMapper {
 
     default Instant mapTimestamp(Long timestamp) {
         return timestamp != null ? Instant.ofEpochMilli(timestamp) : Instant.now();
+    }
+
+    default Instant map(LocalDateTime value) {
+        return value != null ? value.atZone(ZoneId.systemDefault()).toInstant() : null;
     }
 
     default String getSessionId(Location entity) {

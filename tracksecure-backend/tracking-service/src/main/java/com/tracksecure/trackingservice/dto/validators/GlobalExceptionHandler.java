@@ -1,4 +1,4 @@
-package com.tracksecure.trackingservice.validators;
+package com.tracksecure.trackingservice.dto.validators;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
