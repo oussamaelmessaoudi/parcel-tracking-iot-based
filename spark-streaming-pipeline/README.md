@@ -65,35 +65,7 @@ The streaming pipeline uses a **generated CSV dataset**:
 
 ---
 
-## 1. Training ML Models
-
-> Before starting the streaming pipeline, train the ML models and save them in `/models`.
-
-1. Navigate to the training script folder:
-
-```bash
-cd scripts/ml
-```
-
-2. Train the Random Forest and KMeans models:
-
-```bash
-python train_model.py
-```
-
-3. Models will be saved to:
-
-```
-/models/rf_model
-/models/kmeans_model
-/models/scaler_anom
-```
-
-Ensure these paths match the configuration in `consumer.py`.
-
----
-
-## 2. Starting Kafka (via Docker Compose)
+## 1. Starting Kafka (via Docker Compose)
 
 ```bash
 docker-compose up -d
@@ -104,33 +76,24 @@ This starts:
 * Zookeeper
 * Kafka broker
 * Spark Master & Worker nodes
+---
+## 2. Training ML Models
 
+1. Open spark-notebook: http://127.0.0.1:8888/lab/tree/models_pipeline.ipynb
+2. Run all the cells
+3. Models will be saved to:
+
+```
+/models/rf_model
+/models/kmeans_model
+/models/scaler_anom
+```
+## 3. Restart the consumer
 Check logs:
 
 ```bash
 docker-compose logs -f
 ```
-
----
-
-## 3. Start the Producer (Simulated Parcel Data)
-
-```bash
-python producer.py
-```
-
-* Reads from `Data_generator.csv`.
-* Sends parcel data to Kafka topic `parcel_data`.
-* Matches `INPUT_TOPIC` in `consumer.py`.
-
----
-
-## 4. Start the Consumer (Spark Streaming Pipeline)
-
-```bash
-python consumer.py
-```
-
 * Reads streaming data from Kafka.
 * Performs feature engineering.
 * Predicts delays (Random Forest).
@@ -142,14 +105,14 @@ python consumer.py
 
 ---
 
-## 5. Viewing Output
+## 4. Viewing Output
 
 * **Console**: Shows all parcels with `Delay_Status`, `IF_Alert`, and `KMeans_Anomaly_Score`.
 * **Kafka**: Alerts sent to `anomalies` topic (can be consumed by another service).
 
 ---
 
-## 6. Environment Variables (Optional)
+## 5. Environment Variables (Optional)
 
 | Variable            | Description                     | Default       |
 | ------------------- | ------------------------------- | ------------- |
@@ -158,7 +121,7 @@ python consumer.py
 
 ---
 
-## 7. Notes / Best Practices
+## 6. Notes / Best Practices
 
 * Always train models before running the consumer.
 * Clean Spark checkpoints if you restart streaming:
