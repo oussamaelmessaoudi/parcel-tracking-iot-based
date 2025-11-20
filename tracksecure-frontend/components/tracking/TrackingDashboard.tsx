@@ -12,7 +12,7 @@ interface TrackingDashboardProps {
 }
 
 const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageIdFromAdmin, onBackToAdmin }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [trackingHistory, setTrackingHistory] = useState<TrackingData[]>([]);
@@ -43,7 +43,8 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
     }
     
     try {
-      const data = await fetchTrackingData(selectedPackageId);
+      // Passage du token au service
+      const data = await fetchTrackingData(selectedPackageId, token);
       setTrackingHistory(prev => {
         // Éviter d'ajouter des points de données en double si l'horodatage est le même
         if (prev.length > 0 && prev[prev.length - 1].timestamp === data.timestamp) {
@@ -60,7 +61,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
   };
 
   useEffect(() => {
-    if (selectedPackageId) {
+    if (selectedPackageId && token) {
       setTrackingHistory([]); // Vider l'historique pour le nouveau colis
       loadTrackingData(true); // Charger les données initiales
       const interval = setInterval(() => loadTrackingData(false), 5000); // Rafraîchir toutes les 5 secondes
@@ -68,7 +69,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
     } else {
         setTrackingHistory([]);
     }
-  }, [selectedPackageId]);
+  }, [selectedPackageId, token]);
 
   const handleRefresh = () => {
     if (selectedPackageId) {
@@ -120,7 +121,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({ selectedPackageId
                   </div>
                   <div>
                       <p className="font-bold text-red-800">Erreur de connexion</p>
-                      <p className="text-sm text-red-700">Les données n'ont pas pu être reçues.</p>
+                      <p className="text-sm text-red-700">{error}</p>
                   </div>
               </div>
           </div>

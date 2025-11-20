@@ -6,12 +6,32 @@ const packages: PackageData[] = [
     { id: 'PKG-ABCDE', username: 'user', departureLocation: 'Entrepôt B, Marseille', pickupLocation: 'Client Y, Lille' },
 ];
 
+const API_URL = 'http://localhost:8081/api/sensor/latest';
+
 /**
  * Récupère les dernières données de suivi depuis le backend Spring Boot.
+ * @param packageId L'identifiant du colis
+ * @param token Le jeton d'accès JWT de Keycloak
  */
-export const fetchTrackingData = async (packageId: string): Promise<TrackingData> => {
-  const response = await fetch('/api/sensor/latest'); // Point de terminaison mis à jour
+export const fetchTrackingData = async (packageId: string, token?: string): Promise<TrackingData> => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  // Si le token est présent, l'ajouter à l'en-tête Authorization
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(API_URL, {
+    method: 'GET',
+    headers: headers
+  }); 
+
   if (!response.ok) {
+    if (response.status === 401) {
+        throw new Error(`Non authentifié (statut: 401). Veuillez vous reconnecter.`);
+    }
     if (response.status === 403) {
         throw new Error(`Accès non autorisé (statut: 403). Le rôle de l'utilisateur n'a peut-être pas la permission.`);
     }
@@ -78,5 +98,53 @@ export const getPackagesForUser = (username: string): Promise<PackageData[]> => 
         setTimeout(() => {
             resolve(packages.filter(p => p.username === username));
         }, 200);
+    });
+};
+
+/**
+ * Simule la mise à jour d'un colis existant.
+ */
+export const updatePackage = (originalPackageId: string, updatedData: { username: string; departureLocation: string; pickupLocation: string }): Promise<PackageData> => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const packageIndex = packages.findIndex(p => p.id === originalPackageId);
+            if (packageIndex === -1) {
+                return reject(new Error("Le colis n'a pas été trouvé."));
+            }
+
+            if (!updatedData.username) {
+                return reject(new Error('Un utilisateur doit être sélectionné.'));
+            }
+            if (!updatedData.departureLocation.trim() || !updatedData.pickupLocation.trim()) {
+                return reject(new Error('Les lieux de départ et de prise en charge sont requis.'));
+            }
+
+            const currentPackage = packages[packageIndex];
+            const updatedPackage = {
+                ...currentPackage,
+                username: updatedData.username,
+                departureLocation: updatedData.departureLocation,
+                pickupLocation: updatedData.pickupLocation,
+            };
+            packages[packageIndex] = updatedPackage;
+
+            resolve(updatedPackage);
+        }, 300);
+    });
+};
+
+/**
+ * Simule la suppression d'un colis.
+ */
+export const deletePackage = (packageId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const packageIndex = packages.findIndex(p => p.id === packageId);
+            if (packageIndex === -1) {
+                return reject(new Error("Le colis n'a pas été trouvé."));
+            }
+            packages.splice(packageIndex, 1);
+            resolve();
+        }, 300);
     });
 };
