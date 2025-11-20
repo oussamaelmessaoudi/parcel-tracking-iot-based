@@ -1,0 +1,8 @@
+# Normaliser tous les fichiers texte en LF
+* text=auto
+
+# Scripts shell restent en LF
+*.sh text eol=lf
+
+# Notebooks Jupyter gardent LF
+*.ipynb text eol=lf
