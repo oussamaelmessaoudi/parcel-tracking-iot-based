@@ -1,0 +1,5 @@
+{
+  "name": "Dashboard de Suivi de Colis",
+  "description": "Un tableau de bord moderne pour visualiser la température, l'humidité et les coordonnées GPS pour le suivi des colis, conçu pour s'interfacer avec un backend Spring Boot.",
+  "requestFramePermissions": []
+}
