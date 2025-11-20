@@ -1,1 +1,0 @@
-{"class":"org.apache.spark.ml.feature.StringIndexerModel","timestamp":1763587787450,"sparkVersion":"3.5.0","uid":"StringIndexer_f4d4a3a22daa","paramMap":{"inputCol":"Delivery Status","handleInvalid":"keep","outputCol":"Delivery Status_idx"},"defaultParamMap":{"stringOrderType":"frequencyDesc","handleInvalid":"error","outputCol":"StringIndexer_f4d4a3a22daa__output"}}

@@ -1,136 +1,173 @@
-# 📦 Real-Time Parcel Tracking & Anomaly Detection System
+# Parcel Tracking IoT Project – Spark Streaming & ML Pipeline
 
-## 📋 Project Overview
+## Overview
 
-This project builds an end-to-end streaming data pipeline for logistics. It simulates IoT sensors (GPS, Temperature, Speed) attached to parcels moving across Morocco, streams this data into Apache Kafka, and processes it in real-time using Apache Spark Structured Streaming.
+This project implements a **real-time parcel tracking system** using Spark Streaming and machine learning models.
+It predicts **delivery delays** using a **Random Forest model** and detects **anomalies** using **KMeans clustering** on streaming data from IoT sensors.
 
-The system integrates pre-trained Machine Learning models to provide intelligent insights on the fly:
+### Features
 
-Delay Prediction: Uses a Random Forest Classifier to predict if a shipment will be delayed based on route and conditions.
+* Random Forest model for delay prediction.
+* KMeans clustering for anomaly detection.
+* Spark Structured Streaming with Kafka.
+* Real-time alerts on console and Kafka topic.
+* Handles missing or null values in streaming data.
 
-Anomaly Detection: Uses K-Means Clustering to detect abnormal behavior (e.g., route deviation, sensor failure, unusual stops).
+---
 
-## 🏗️ Architecture
+## Prerequisites
 
-The entire stack is containerized using Docker:
+* Python 3.10+
+* Virtual environment (`venv`)
+* Docker & Docker Compose
+* Apache Spark 3.5+
+* Kafka cluster (can run locally via Docker)
+* Required Python packages (listed in `requirements.txt`)
 
-- Zookeeper: Manages the Kafka cluster state.
+---
 
-- Kafka: Ingests high-throughput real-time sensor data from the producer.
+## Setup
 
-- Producer (Python): Simulates truck fleets moving between major Moroccan cities (Tanger, Casablanca, Agadir, etc.), generating realistic GPS tracks and sensor readings.
+1. **Clone the repository**:
 
-- Spark Processor: A streaming application (consumer.py) that loads ML models, consumes Kafka data, performs feature engineering, and outputs predictions/alerts.
-
-- Spark Notebook (Jupyter): An interactive environment to explore historical data and train the Machine Learning models.
-
-## 📂 Project Structure
-
-- docker-compose.yml - Orchestration of all services.
-
-- producer.py - Generates synthetic "Morocco-aware" logistics data.
-
-- consumer.py - The Spark Structured Streaming job with ML inference.
-
-- model_training.ipynb - Jupyter Notebook for training Random Forest & KMeans models.
-
-- data/Data_generator.py - Script to create the historical CSV dataset.
-
-- data/ - Stores historical CSVs (e.g., morocco_full_dataset.csv).
-
-- models/ - Shared volume where trained Spark ML models are saved.
-
-## 🚀 Getting Started
-
-### 1. Prerequisites
-
-Docker Desktop installed and running.
-
-Python 3.x installed locally (for data generation).
-
-### 2. Start the Environment
-
-Boot up the entire pipeline with a single command:
 ```bash
-docker-compose up --build -d
+git clone https://github.com/oussamaelmessaoudi/parcel-tracking-iot-based.git
+cd spark-streaming-pipeline
 ```
 
-### 3. Generate Historical Data (Crucial)
+2. **Create and activate virtual environment**:
 
-Before training the models, you must generate the synthetic dataset that simulates Moroccan logistics. This ensures the model learns the correct geography and "normal" behavior.
-
-Run the generator script:
-
-# Generates 'data/morocco_full_dataset.csv'
 ```bash
-python data/Data_generator.py
+python -m venv .venv
+# Windows
+.\.venv\Scripts\activate
+# Linux/Mac
+source .venv/bin/activate
 ```
 
-### 4. Train the Models (First Run Only)
+3. **Install Python dependencies**:
 
-- Before the streaming processor can predict anything, it needs trained models.
-
-- Open your browser and go to http://localhost:8888 (Jupyter Lab).
-
-- Open model_training.ipynb.
-
-- Ensure the dataset path matches the generated file (e.g., data/morocco_full_dataset.csv).
-
-- Click Run All Cells.
-
-- This will train the Random Forest and K-Means models.
-
-- It saves the pipelines and scalers into the models/ directory.
-
-### 5. Activate the Real-Time Stream
-
-Once models are trained, ensure the Spark Processor loads them:
 ```bash
-# Restart the processor to load the newly created models
-docker-compose restart spark-processor
+pip install -r requirements.txt
 ```
 
-### 6. Monitor the Pipeline
+---
 
-You can watch the real-time processing in the terminal logs.
+## Dataset
 
-View Producer Logs (Sending data):
+The streaming pipeline uses a **generated CSV dataset**:
+
+* File: `Data_generator.csv`
+* Used by `producer.py` to simulate IoT parcel data.
+* Columns include: `package_id`, `timestamp`, `gps_latitude`, `gps_longitude`, `temperature`, `humidity`, `speed`
+
+> You can modify `Data_generator.csv` to simulate different scenarios.
+
+---
+
+## 1. Training ML Models
+
+> Before starting the streaming pipeline, train the ML models and save them in `/models`.
+
+1. Navigate to the training script folder:
+
 ```bash
-docker logs -f producer
+cd scripts/ml
 ```
 
-Output: [Producer] pkg_001 (Route-Nord): Lat=34.0208, Lon=-6.8416, Speed=82.0
+2. Train the Random Forest and KMeans models:
 
-View Spark Processor Logs (Predictions & Anomalies):
 ```bash
-docker logs -f spark-processor
+python train_model.py
 ```
 
-Output:
-```bash
--------------------------------------------
-Batch: 15
--------------------------------------------
-+----------+-----------------------+-----------+-----+---------------+--------+--------------------+
-|package_id|event_time             |Temperature|Speed|Delay_Status   |IF_Alert|KMeans_Anomaly_Score|
-+----------+-----------------------+-----------+-----+---------------+--------+--------------------+
-|pkg_001   |2025-11-19 21:45:10.55 |25.5       |82.0 |ON_TIME        |NORMAL  |0.85421             |
-|pkg_002   |2025-11-19 21:45:10.55 |38.2       |0.0  |DELAY_PREDICTED|ANOMALY |24.12455            |
-+----------+-----------------------+-----------+-----+---------------+--------+--------------------+
+3. Models will be saved to:
+
+```
+/models/rf_model
+/models/kmeans_model
+/models/scaler_anom
 ```
 
-### 🧠 Machine Learning Logic
+Ensure these paths match the configuration in `consumer.py`.
 
-Normal Behavior: A truck moving at ~80km/h on known coordinates (e.g., Highway A3) with standard temperature (~25°C) produces a low Anomaly Score (< 20).
+---
 
-Anomaly: If the producer simulates a breakdown (Speed=0) or extreme heat (Temp=45), the Anomaly Score spikes (> 20), triggering an ANOMALY alert.
+## 2. Starting Kafka (via Docker Compose)
 
-Delay: The Random Forest classifier looks at the route and current conditions to predict ON_TIME or DELAY_PREDICTED.
+```bash
+docker-compose up -d
+```
 
-### 🛠️ Troubleshooting
+This starts:
 
-"Permission Denied" in Jupyter: The docker-compose.yml is configured to map permissions correctly for the jovyan user. If issues persist, check file ownership in the models/ folder.
+* Zookeeper
+* Kafka broker
+* Spark Master & Worker nodes
 
-High Anomaly Scores (~2000+): This means the streaming data does not match the training data distribution (e.g., training on US coordinates but streaming Morocco coordinates). Ensure you generated the Morocco dataset (Step 3) and retrained the models (Step 4).
+Check logs:
 
-Container Crashing: Ensure 4GB+ RAM is allocated to Docker, as Spark + Kafka can be memory-intensive.
+```bash
+docker-compose logs -f
+```
+
+---
+
+## 3. Start the Producer (Simulated Parcel Data)
+
+```bash
+python producer.py
+```
+
+* Reads from `Data_generator.csv`.
+* Sends parcel data to Kafka topic `parcel_data`.
+* Matches `INPUT_TOPIC` in `consumer.py`.
+
+---
+
+## 4. Start the Consumer (Spark Streaming Pipeline)
+
+```bash
+python consumer.py
+```
+
+* Reads streaming data from Kafka.
+* Performs feature engineering.
+* Predicts delays (Random Forest).
+* Detects anomalies (KMeans).
+* Sends alerts to:
+
+  * Console
+  * Kafka topic `anomalies`
+
+---
+
+## 5. Viewing Output
+
+* **Console**: Shows all parcels with `Delay_Status`, `IF_Alert`, and `KMeans_Anomaly_Score`.
+* **Kafka**: Alerts sent to `anomalies` topic (can be consumed by another service).
+
+---
+
+## 6. Environment Variables (Optional)
+
+| Variable            | Description                     | Default       |
+| ------------------- | ------------------------------- | ------------- |
+| `KAFKA_BOOTSTRAP`   | Kafka broker address            | `kafka:29092` |
+| `ANOMALY_THRESHOLD` | Threshold for anomaly detection | `2500.0`      |
+
+---
+
+## 7. Notes / Best Practices
+
+* Always train models before running the consumer.
+* Clean Spark checkpoints if you restart streaming:
+
+```bash
+rm -rf checkpoints/*
+```
+
+* Handle CRLF warnings if using Git on Windows.
+* Use Docker for a reproducible environment.
+* Activate your Python virtual environment before running scripts.
+
