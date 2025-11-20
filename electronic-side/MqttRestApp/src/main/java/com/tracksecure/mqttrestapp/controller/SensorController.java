@@ -18,13 +18,11 @@ public class SensorController {
     private final MqttService mqttService;
 
     @GetMapping("/health")
-    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Service is running");
     }
 
     @GetMapping("/sensor/latest")
-    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<SensorData> getLatestSensorData() {
         SensorData data = mqttService.getLatestData().get();
         log.info("REST API: Returning latest sensor data");
@@ -32,14 +30,12 @@ public class SensorController {
     }
 
     @GetMapping("/sensor/dht")
-    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<?> getDhtData() {
         SensorData data = mqttService.getLatestData().get();
         return ResponseEntity.ok(data.getDhtData());
     }
 
     @GetMapping("/sensor/gps")
-    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<?> getGpsData() {
         SensorData data = mqttService.getLatestData().get();
         return ResponseEntity.ok(data.getGpsData());
