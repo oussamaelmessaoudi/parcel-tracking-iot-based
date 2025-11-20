@@ -9,12 +9,12 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
         // add proxy for API requests
-        proxy: {
-          '/api': {
-            target: 'http://mqttrestapp:8081',
-            changeOrigin: true,
-          },
-      },
+      //   proxy: {
+      //     '/api': {
+      //       target: 'http://mqttrestapp:8081',
+      //       changeOrigin: true,
+      //     },
+      // },
       },
       plugins: [react()],
       

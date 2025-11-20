@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CreateUserForm from './CreateUserForm';
 import CreatePackageForm from './CreatePackageForm';
 import EditUserForm from './EditUserForm';
-import { getPackages } from '../../services/trackingService';
+import EditPackageForm from './EditPackageForm';
+import { getPackages, deletePackage } from '../../services/trackingService';
 import { PackageData, User } from '../../types';
 import { getUsers, deleteUser } from '../../services/authService';
 import { UserPlusIcon, PackageIcon, UserIcon as UsersIcon } from '../Icons';
@@ -18,6 +19,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTrackPackage }) => {
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingPackage, setEditingPackage] = useState<PackageData | null>(null);
 
   const fetchData = async () => {
     const packagesData = await getPackages();
@@ -34,11 +36,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTrackPackage }) => {
     fetchData(); // Refresh data
     setView('list'); // Go back to the list view
     setEditingUser(null);
+    setEditingPackage(null);
   };
 
   const handleCancel = () => {
     setView('list');
     setEditingUser(null);
+    setEditingPackage(null);
   };
 
   const handleEditUserClick = (user: User) => {
@@ -57,9 +61,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTrackPackage }) => {
     }
   };
   
+  const handleEditPackageClick = (pkg: PackageData) => {
+    setEditingPackage(pkg);
+    setView('edit');
+  };
+
+  const handleDeletePackage = async (packageId: string) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le colis "${packageId}" ? Cette action est irréversible.`)) {
+        try {
+            await deletePackage(packageId);
+            await fetchData();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression.');
+        }
+    }
+  };
+
   const renderPackagesView = () => {
     if (view === 'create') {
         return <CreatePackageForm users={users} onSuccess={handleSuccess} onCancel={handleCancel} />;
+    }
+    if (view === 'edit' && editingPackage) {
+        return <EditPackageForm pkg={editingPackage} users={users} onSuccess={handleSuccess} onCancel={handleCancel} />;
     }
     // List view
     return (
@@ -76,19 +99,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTrackPackage }) => {
                 <ul role="list" className="divide-y divide-gray-200">
                     {packages.map((pkg) => (
                         <li key={pkg.id} onClick={() => onTrackPackage(pkg.id)} className="cursor-pointer hover:bg-gray-50 transition-colors duration-200">
-                            <div className="px-4 py-4 sm:px-6">
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                                    <p className="text-sm font-medium text-emerald-600 truncate">{pkg.id}</p>
-                                    <div className="sm:ml-2 flex-shrink-0 flex">
-                                    <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Assigné à: {pkg.username}
-                                    </p>
+                           <div className="px-4 py-4 sm:px-6 flex items-center justify-between flex-wrap gap-4">
+                                <div className="flex-grow">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                        <p className="text-sm font-medium text-emerald-600 truncate">{pkg.id}</p>
+                                        <div className="sm:ml-2 flex-shrink-0 flex">
+                                        <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Assigné à: {pkg.username}
+                                        </p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 text-sm text-gray-600">
+                                        <span>Départ: <strong>{pkg.departureLocation}</strong></span>
+                                        <span className="mx-2 text-gray-400">→</span>
+                                        <span>Prise en charge: <strong>{pkg.pickupLocation}</strong></span>
                                     </div>
                                 </div>
-                                <div className="mt-2 text-sm text-gray-600">
-                                    <span>Départ: <strong>{pkg.departureLocation}</strong></span>
-                                    <span className="mx-2 text-gray-400">→</span>
-                                    <span>Prise en charge: <strong>{pkg.pickupLocation}</strong></span>
+                                <div className="flex items-center gap-x-4 ml-auto flex-shrink-0">
+                                    <button onClick={(e) => { e.stopPropagation(); handleEditPackageClick(pkg); }} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">Modifier</button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeletePackage(pkg.id); }} className="text-sm font-medium text-red-600 hover:text-red-900">Supprimer</button>
                                 </div>
                             </div>
                         </li>
