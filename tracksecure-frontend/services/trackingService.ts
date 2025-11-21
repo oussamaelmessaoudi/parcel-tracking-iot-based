@@ -6,7 +6,7 @@ const packages: PackageData[] = [
     { id: 'PKG-ABCDE', username: 'user', departureLocation: 'Entrepôt B, Marseille', pickupLocation: 'Client Y, Lille' },
 ];
 
-const API_URL = 'http://localhost:8081/api/sensor/latest';
+const API_URL = '/api/sensor/latest';
 
 /**
  * Récupère les dernières données de suivi depuis le backend Spring Boot.
